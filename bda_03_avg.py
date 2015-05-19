@@ -54,9 +54,9 @@ def main():
     ms_in = os.path.join('vis', 'test_cor.ms')
     ms_out = os.path.join('vis', 'test_cor_ave.ms')
     max_fact = 1.01   # Maximum amplitude factor by which a source can drop.
-    dt = 1.6          # Correlator dump time (TODO(BM) get this from the
-                      # measurment set
-    dt_max = '%.14fs' % 10*dt  # Maximum allowed averaging time, as a CASA string.
+    dt = 1.6  # Correlator dump time. TODO(BM) get this from the MS.
+    dt_max = '%.14fs' % (10.0*dt)  # Maximum allowed averaging time, as a
+                                   # CASA string.
     fov_radius = 0.9  # Field of view radius (input into mstransform)
     # ----------------------------------------
 

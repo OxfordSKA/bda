@@ -22,15 +22,18 @@ def load_gains(cal_table):
 
 def main():
     # ------------------------------------------------------------
-    cal_table = os.path.join('vis', 'test.cal')
+    #cal_table = os.path.join('vis', 'test.cal')
+    cal_table = os.path.join('vis', 'test_cal.ms.gcal')
     plot_num_stations = 20  # Number of stations to plot gains for
     # ------------------------------------------------------------
     gains, num_antennas, num_times, dt = load_gains(cal_table)
 
     gains = gains[0, 0, :]
+    gains = 1./gains
     x = np.arange(0, num_times)*dt
     fig, axes = plt.subplots(4, 1, sharex=True, sharey=False, figsize=(12,10))
-    for i in np.random.randint(0, num_antennas, plot_num_stations):
+    #for i in np.random.randint(0, num_antennas, plot_num_stations):
+    for i in range(0, plot_num_stations):
         axes[0].plot(x, np.abs(gains[i::num_antennas]))
         axes[1].plot(x, np.angle(gains[i::num_antennas])*(180.0/np.pi))
         axes[2].plot(x, np.real(gains[i::num_antennas]))
@@ -39,8 +42,8 @@ def main():
     for axis in axes:
         axis.grid()
 
-    axes[0].set_title('Gains for %i randomly selected stations' %
-                      plot_num_stations)
+    axes[0].set_title('%s : Gains for %i randomly selected stations' %
+                      (cal_table, plot_num_stations))
     axes[0].set_ylabel('gain amplitude')
     axes[1].set_ylabel('gain phase')
     axes[2].set_ylabel('real(gain)')

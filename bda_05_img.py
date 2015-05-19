@@ -1,8 +1,5 @@
 #!/usr/bin/python -u
-# To ignore numpy errors:
-#     pylint: disable=E1101
-# To ignore undefined CASA classes
-#     pylint: disable=undefined-variable
+
 
 def fov_to_cellsize(fov, imsize):
     import numpy as np
@@ -10,6 +7,7 @@ def fov_to_cellsize(fov, imsize):
     inc = rmax / (0.5 * np.array(imsize))
     cell = np.arcsin(inc)*((180.*3600.)/np.pi)
     return cell.tolist()
+
 
 def casa_image(ms, rootname, imsize, fov, ra0, dec0, wplanes=None):
     """Make an image using CASA
@@ -47,9 +45,9 @@ def casa_image(ms, rootname, imsize, fov, ra0, dec0, wplanes=None):
                       dopbgriddingcorrections=True, applypointingoffsets=False)
 
     dirty = rootname+'_dirty.img'
-    #psf = rootname+'_psf.img'
+    # psf = rootname+'_psf.img'
     im.makeimage(image=dirty, type='observed', verbose=False)
-    #im.makeimage(image=psf, type='psf', verbose=False)
+    # im.makeimage(image=psf, type='psf', verbose=False)
     im.close()
 
     ia.open(dirty)

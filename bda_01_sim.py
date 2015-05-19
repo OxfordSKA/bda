@@ -1,15 +1,7 @@
 #!/usr/bin/python -u
 
 """
-Simulation of a corrupted MS.
-
-Steps:
-    1. Simulate uncorrupted MS in OSKAR
-        a. create the sky model
-        b. create the settings
-        c. run the simulation
-    2. Add noise
-    3. Add calibration errors
+Simulate a Measurement Set for use with BDA tests.
 """
 
 def create_sky_model(sky_file, ra, dec, I):
@@ -22,9 +14,31 @@ def create_sky_model(sky_file, ra, dec, I):
         fh.write('%.14f, %.14f, %.3f' % (ra_, dec_, I_))
     fh.close()
 
+
+def dict_to_ini(settings_dict, ini):
+    """Convert a dictionary of settings to and OSKAR settings ini file."""
+    import os
+    ini_dir = os.path.dirname(ini)
+    if not ini_dir == "" and not os.path.isdir(ini_dir):
+        os.makedirs(ini_dir)
+    for group in sorted(settings_dict.keys()):
+        for key in sorted(settings_dict[group].keys()):
+            key_ = group+key
+            value_ = settings_dict[group][key]
+            set(ini, key_, value_)
+
+
+def run_interferometer(ini, verbose=True):
+    """Run the OSKAR interferometer simulator."""
+    from subprocess import call
+    if verbose:
+        call(['oskar_sim_interferometer', ini])
+    else:
+        call(['oskar_sim_interferometer', '-q', ini])
+
+
 def create_settings(ini_file, sky, ms):
     """Create simulation settings file."""
-    import oskarpy
     import os
     if not os.path.isdir(os.path.dirname(ms)):
         os.mkdir(os.path.dirname(ms))
@@ -57,11 +71,10 @@ def create_settings(ini_file, sky, ms):
         'channel_bandwidth_hz': 4000,
         'ms_filename': ms
     }
-    oskarpy.settings.dict_to_ini(s, ini_file)
+    dict_to_ini(s, ini_file)
     return s
 
 def oskar_sim():
-    import oskarpy
     import os
     # ---------------------------------------------
     ini = os.path.join('ini', 'test.ini')
@@ -72,7 +85,7 @@ def oskar_sim():
     # ---------------------------------------------
     create_sky_model(sky, [ra0], [dec0+0.9], [1.0])
     create_settings(ini, sky, ms)
-    oskarpy.simulate.run_interferometer(ini, verbose=False)
+    run_interferometer(ini, verbose=False)
     return ms
 
 def main():
