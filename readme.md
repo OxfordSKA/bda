@@ -1,4 +1,4 @@
 # Baseline dependent averaging scripts
 
-This is a set of python scripts for baseline dependent averaging simulation using [CASA](casa.nrao.edu), [OSKAR](oerc.ox.ac.uk/~ska/oskar2/), and [WSClean](sourceforge.net/projects/wsclean/).
+This is a set of python scripts for simulations of baseline dependent averaging using [CASA](https://casa.nrao.edu), [OSKAR](https://oerc.ox.ac.uk/~ska/oskar2/), and [WSClean](https://sourceforge.net/projects/wsclean/).
 
