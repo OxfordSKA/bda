@@ -126,6 +126,7 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
     phase_sigma_wn = 0.0
     # TODO(BM) generate station allan variance within a distribution so some
     #          stations are better than others wrt their allan variance.
+    # TODO(BM) generate gains wrt ref. antenna
     # ----------------------------------
     tb.open(cal_table, nomodify=False)
     for s in range(0, num_stations):
