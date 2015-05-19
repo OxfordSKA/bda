@@ -26,10 +26,13 @@ orig['ww'] = orig_uvw[2, :]
 orig['a1'] = orig_ant1
 orig['a2'] = orig_ant2
 orig['v'] = orig_data[0, 0, :]
-orig01 = orig[orig['a1']==0]
-orig01 = orig01[orig01['a2']==1]
-print '+ No. vis for baseline_01 in original data %i' % orig01.shape[0]
-orig_intervals = np.round(orig01['t']/1.6)
+
+p = 0
+q = 1
+orig_pq = orig[orig['a1']==p]
+orig_pq = orig_pq[orig_pq['a2']==q]
+print '+ No. vis for baseline_pq in original data %i' % orig_pq.shape[0]
+orig_intervals = np.round(orig_pq['t']/1.6)
 
 
 ms = os.path.join('vis', 'test_cor_ave.ms')
@@ -51,23 +54,30 @@ ave['a1'] = ave_ant1
 ave['a2'] = ave_ant2
 ave['v'] = ave_data[0, 0, :]
 # Obtain baseline 01 visibilities
-ave01 = ave[ave['a1']==0]
-ave01 = ave01[ave01['a2']==1]
-print '+ No. vis for baseline_01 in averaged data %i' % ave01.shape[0]
-ave_intervals = ave01['t']/1.6
+ave_pq = ave[ave['a1']==p]
+ave_pq = ave_pq[ave_pq['a2']==q]
+print '+ No. vis for baseline_pq in averaged data %i' % ave_pq.shape[0]
+ave_intervals = ave_pq['t']/1.6
 
 # FIXME(BM) mmm not sure why this doenst work...
-# start=0
-# for i in range(0, 20):
-#     # diff01 = ave01['v'][0]-(np.mean(orig01['v'][start:start+i+1]))
-#     diff01 = ave01['v'][0]-orig01['v'][start+i]
-#     print '%02i %+7.3f %+7.3f [%+7.3f] [%+8.3f]' % \
-#         (i, np.real(diff01), np.imag(diff01), np.abs(diff01),
-#          np.angle(diff01)*(180./np.pi))
-
 start=0
 for i in range(0, 20):
-    diff01 = ave01['t'][0]-orig01['t'][start+i]
-    print '%02i %+7.3f' % (i, diff01)
+    diff_pq = ave_pq['v'][0]-(np.mean(orig_pq['v'][start:start+i+1]))
+    #diff_pq = ave_pq['v'][0]-orig_pq['v'][start+i]
+    print '%02i %+7.3f %+7.3f [%+7.3f] [%+8.3f]' % \
+        (i, np.real(diff_pq), np.imag(diff_pq), np.abs(diff_pq),
+         np.angle(diff_pq)*(180./np.pi))
+print ''
 
+for i in range(0, 20):
+    diff_pq_0 = ave_pq['t'][0]/1.6-orig_pq['t'][start+i]/1.6
+    diff_pq_1 = ave_pq['t'][1]/1.6-orig_pq['t'][start+i]/1.6
+    print '%02i %+7.3f %+7.3f' % (i, diff_pq_0, diff_pq_1)
+    if i == 7 or i == 19: print ''
+
+
+# TODO(BM) try with different ms transform settings.
+# ie. perhaps with timebin to dt*2 for testing.
+
+print ''
 print orig.shape[0], ave.shape[0], '%.2f:1' % (float(orig.shape[0])/ave.shape[0])

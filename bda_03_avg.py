@@ -38,7 +38,7 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
     mstransform(vis=ms_in,
                 outputvis=ms_out,
                 createmms=False,
-                datacolumn='all',
+                datacolumn='all',  # TODO(BM) check this value
                 usewtspectrum=False,
                 combinespws=False,
                 chanaverage=False,
