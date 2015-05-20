@@ -3,6 +3,7 @@
 import numpy as np
 import os
 import shutil
+import time
 
 def inv_sinc(arg):
     """
@@ -51,8 +52,6 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
 
 def main():
     # ----------------------------------------
-    ms_in = os.path.join('vis', 'test_cor.ms')
-    ms_out = os.path.join('vis', 'test_cor_ave.ms')
     max_fact = 1.01   # Maximum amplitude factor by which a source can drop.
     dt = 1.6  # Correlator dump time. TODO(BM) get this from the MS.
     dt_max = '%.14fs' % (10.0*dt)  # Maximum allowed averaging time, as a
@@ -60,7 +59,17 @@ def main():
     fov_radius = 0.9  # Field of view radius (input into mstransform)
     # ----------------------------------------
 
+    t0 = time.time()
+    ms_in = os.path.join('vis', 'model.ms')
+    ms_out = os.path.join('vis', 'model_ave.ms')
     run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
+    print '+ Time taken in averaging = %.3fs [%s]' % (time.time()-t0, ms_out)
+
+    t0 = time.time()
+    ms_in = os.path.join('vis', 'corrupted.ms')
+    ms_out = os.path.join('vis', 'corrupted_ave.ms')
+    run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
+    print '+ Time taken in averaging = %.3fs [%s]' % (time.time()-t0, ms_out)
 
 
 if __name__ == "__main__":

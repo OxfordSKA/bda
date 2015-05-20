@@ -66,6 +66,7 @@ def eval_gain_amp(length, tstep, hurst, adev_fbm, sigma_wn, tau):
     g_wn = np.random.randn(length+1,)*sigma_wn
     return (g_fbm + g_wn) + 1.0
 
+
 def eval_gain_phase(n, tstep, H, adev_fbm, sigma_wn, tau):
     p_fbm = fbm(n, H)
     p_fbm *= adev_fbm/adev(p_fbm, tstep, tau)[0]
@@ -79,7 +80,12 @@ def eval_complex_gain(n, dt, amp_H, amp_adev_fbm, amp_sigma_wn,
     amp = eval_gain_amp(n, dt, amp_H, amp_adev_fbm, amp_sigma_wn, tau)
     phase = eval_gain_phase(n, dt, phase_H, phase_adev_fbm, phase_sigma_wn,
                             tau)*np.pi/180.0
-    gain = amp * np.exp(1j * phase)
+    # Random starting point to amp and phase
+    amp_std_t0 = 0.005
+    phase_std_t0 = 30.0
+    amp_t0 = np.random.randn(1,)*amp_std_t0
+    phase_t0 = np.random.randn(1,)*phase_std_t0*(np.pi/180.)
+    gain = (amp+amp_t0) * np.exp(1.0j * (phase+phase_t0))
     return gain
 
 
@@ -119,21 +125,47 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
     # ----------------------------------
     tau = np.ceil(1.0/dt)*dt
     amp_H = 0.8
-    amp_adev_fbm = 2.0e-3
+    amp_adev_fbm = 1.0e-4
     amp_sigma_wn = 0.0
     phase_H = 0.8
-    phase_adev_fbm = 0.15
+    phase_adev_fbm = 1.0
     phase_sigma_wn = 0.0
     # TODO(BM) generate station allan variance within a distribution so some
     #          stations are better than others wrt their allan variance.
+    #          - randomise the gain and phase at the start time for each
+    #            antenna. gain = gain0 + gain
+    # amp_std_t0 = 0.005
+    # phase_std_t0 = 90.0
     # TODO(BM) generate gains wrt ref. antenna
     # ----------------------------------
     tb.open(cal_table, nomodify=False)
-    for s in range(0, num_stations):
+    gains0 = eval_complex_gain(num_times, dt,
+                               amp_H, amp_adev_fbm, amp_sigma_wn,
+                               phase_H, phase_adev_fbm, phase_sigma_wn, tau)
+    for t in range(0, num_times):
+        row = 0 + t * num_stations
+        gain = tb.getcell('CPARAM', row)
+        # gain[0] = gains0[t]
+        # gain[1] = gains0[t]
+        gain[0] = 1.0 + 0.0j
+        gain[1] = 1.0 + 0.0j
+        tb.putcell('CPARAM', row, gain)
+        tb.putcell('TIME', row, time_range[0] + t * dt)
+
+    tb.open(cal_table, nomodify=False)
+    for s in range(1, num_stations):
+        # amp_t0 = np.random.randn(1,)*amp_std_t0
+        # phase_t0 = np.random.randn(1,)*phase_std_t0
+        # gain_t0 = amp_t0 * np.exp(1.0j * phase_t0 * (np.pi/180.0))
+        #print amp_t0, phase_t0, np.angle(gain_t0)*(180.0/np.pi)
         gains = eval_complex_gain(num_times, dt,
                                   amp_H, amp_adev_fbm, amp_sigma_wn,
-                                  phase_H, phase_adev_fbm, phase_sigma_wn,
-                                  tau)
+                                  phase_H, phase_adev_fbm, phase_sigma_wn, tau)
+        # print np.angle(gains[0])*(180./np.pi)
+        #gains += gain_t0
+        # print np.angle(gains[0])*(180./np.pi), np.angle(gain_t0)*(180./np.pi)
+        # print ''
+        #gains = gains/gains0
         for t in range(0, num_times):
             row = s + t * num_stations
             gain = tb.getcell('CPARAM', row)
@@ -141,6 +173,7 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
             gain[1] = gains[t]
             tb.putcell('CPARAM', row, gain)
             tb.putcell('TIME', row, time_range[0] + t * dt)
+
     tb.close()
 
 
@@ -164,7 +197,7 @@ def copy_column(ms, src_col, dst_col):
     num_rows = tb.nrows()
     rows_read = 0
     while rows_read != num_rows:
-        chunk_size = 10000
+        chunk_size = 20000
         if num_rows - rows_read < chunk_size:
             chunk_size = num_rows - rows_read
         t = tb.getcol(src_col, startrow=rows_read, nrow=chunk_size)
@@ -186,9 +219,9 @@ def main():
     tAll = time.time()
 
     # ---------------------------------------------------
-    ms_in = os.path.join('vis', 'test.ms')
-    ms = os.path.join('vis', 'test_cor.ms')
-    cal_table = os.path.join('vis', 'test.cal')
+    ms_in = os.path.join('vis', 'model.ms')
+    ms = os.path.join('vis', 'corrupted.ms')
+    cal_table = os.path.join('vis', 'corrupted.gains')
     # ---------------------------------------------------
 
     if os.path.isdir(ms):
@@ -243,6 +276,8 @@ def main():
     print '+ Updating data column ...'
     copy_column(ms, 'CORRECTED_DATA', 'DATA')
     print '+ Done [%.3fs].\n' % (time.time() - t0)
+
+    # TODO(BM) add white noise (do this before/ after applying gain errors?!)
 
     print '+ Applying corruptions took %.3f seconds' % (time.time()-tAll)
 

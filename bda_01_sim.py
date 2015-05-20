@@ -47,7 +47,7 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
         os.mkdir(os.path.dirname(ms))
     # --------------------------------------------------------------
     dt = 1.6  # seconds
-    num_times = 100
+    num_times = 50
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg
@@ -90,7 +90,7 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
 def oskar_sim():
     # ---------------------------------------------
     ini = os.path.join('ini', 'test.ini')
-    ms = os.path.join('vis', 'vis_01.ms')
+    ms = os.path.join('vis', 'model.ms')
     sky = os.path.join('models', 'sky.osm')
     ra0 = -90.3545848760  # deg
     dec0 = -8.5711239906  # deg

@@ -22,17 +22,20 @@ def load_gains(cal_table):
 
 def main():
     # ------------------------------------------------------------
-    #cal_table = os.path.join('vis', 'test.cal')
-    cal_table = os.path.join('vis', 'test_cal.ms.gcal')
-    plot_num_stations = 20  # Number of stations to plot gains for
+    # cal_table = os.path.join('vis', 'corrupted.gains')
+    cal_table = os.path.join('vis', 'calibrated.gains')
+    plot_num_stations = 4  # Number of stations to plot gains for
     # ------------------------------------------------------------
     gains, num_antennas, num_times, dt = load_gains(cal_table)
+    if plot_num_stations == -1:
+        plot_num_stations = num_antennas
 
     gains = gains[0, 0, :]
-    gains = 1./gains
+    if 'corrupted' in cal_table :
+        gains = 1.0/gains
     x = np.arange(0, num_times)*dt
     fig, axes = plt.subplots(4, 1, sharex=True, sharey=False, figsize=(12,10))
-    #for i in np.random.randint(0, num_antennas, plot_num_stations):
+    # for i in np.random.randint(0, num_antennas, plot_num_stations):
     for i in range(0, plot_num_stations):
         axes[0].plot(x, np.abs(gains[i::num_antennas]))
         axes[1].plot(x, np.angle(gains[i::num_antennas])*(180.0/np.pi))
@@ -42,8 +45,10 @@ def main():
     for axis in axes:
         axis.grid()
 
-    axes[0].set_title('%s : Gains for %i randomly selected stations' %
-                      (cal_table, plot_num_stations))
+    # axes[0].set_title('%s : Gains for %i randomly selected stations' %
+    #                   (cal_table, plot_num_stations))
+    axes[0].set_title('%s : Gains for the first %i stations' %
+                     (cal_table, plot_num_stations))
     axes[0].set_ylabel('gain amplitude')
     axes[1].set_ylabel('gain phase')
     axes[2].set_ylabel('real(gain)')
@@ -51,8 +56,10 @@ def main():
     axes[3].set_xlabel('time [seconds]')
     axes[3].set_xlim(0, num_times*dt)
 
+    plt.tight_layout()
+    #plt.savefig(cal_table+'.png', transparent=True, frameon=False)
+    plt.savefig(cal_table+'.png')
     plt.show()
-
 
 
 if __name__ == "__main__":

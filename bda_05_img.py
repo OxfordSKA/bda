@@ -9,7 +9,7 @@ def fov_to_cellsize(fov, imsize):
     return cell.tolist()
 
 
-def casa_image(ms, rootname, imsize, fov, ra0, dec0, wplanes=None):
+def casa_image(ms, rootname, data_column, imsize, fov, ra0, dec0, wplanes=None):
     """Make an image using CASA
     http://casa.nrao.edu/docs/CasaRef/imager-Module.html#x636-6490002.5
     """
@@ -22,9 +22,11 @@ def casa_image(ms, rootname, imsize, fov, ra0, dec0, wplanes=None):
     cell = fov_to_cellsize(fov, imsize) # arcsec
 
     print '-'*80
-    print '+ Size     : %i   x %i   [pixels]' % (imsize[0], imsize[1])
-    print '+ FoV      : %.2f x %.2f [deg]' % (fov[0], fov[1])
-    print '+ Cellsize : %.4f x %.4f [arcsec]' % (cell[0], cell[1])
+    print '+ Size     : %i pixels' % (imsize[0])
+    print '+ FoV      : %.2f deg' % (fov[0])
+    print '+ Cellsize : %.4f arcsec' % (cell[0])
+    print '+ RA0      : %.4f deg' % (ra0)
+    print '+ Dec0     : %.4f deg' % (dec0)
     print '-'*80
 
     im.open(ms, usescratch=False, compress=False)
@@ -46,8 +48,15 @@ def casa_image(ms, rootname, imsize, fov, ra0, dec0, wplanes=None):
 
     dirty = rootname+'_dirty.img'
     # psf = rootname+'_psf.img'
-    im.makeimage(image=dirty, type='observed', verbose=False)
-    # im.makeimage(image=psf, type='psf', verbose=False)
+    if data_column is 'DATA':
+        im.makeimage(image=dirty, type='observed', verbose=False)  # DATA column
+    elif data_column is 'CORRECTED_DATA':
+        im.makeimage(image=dirty, type='corrected', verbose=False)  # CORRECTED_DATA column
+    elif data_column is 'MODEL_DATA':
+        im.makeimage(image=dirty, type='model', verbose=False)  # MODEL_DATA column
+    else:
+        print 'ERROR: Unknown data column!'
+        return
     im.close()
 
     ia.open(dirty)
@@ -66,11 +75,11 @@ def main():
     import time
 
     # ---------------------------------------
-    ms = os.path.join('vis', 'test_cor_ave.ms')
+    # ms = os.path.join('vis', 'test_cor_ave.ms')
     all_ms = [ms for ms in os.listdir('vis') if ms[-2:] == 'ms']
-    rootname = 'images/cor_ave'
+    # rootname = 'images/cor_ave'
     img_size = [512, 512]
-    img_fov = [0.3, 0.3] # deg
+    img_fov = [0.2, 0.2] # deg
     # TODO(BM) load ra, dec from sky model
     ra0 = -90.35458487600000
     dec0 = -7.67112399060000
@@ -81,9 +90,18 @@ def main():
     for ms in all_ms:
         rootname = os.path.join('images', ms[:-3])
         ms = os.path.join('vis', ms)
-        print '+ Imaging with CASA ... [ms=%s -> %s]' % (ms, rootname)
-        casa_image(ms, rootname, img_size, img_fov, ra0, dec0, wplanes)
+
+        if 'calibrated' in ms:
+            data_column = 'CORRECTED_DATA'
+        else:
+            data_column = 'DATA'
+        print '+ Imaging with CASA ... [ms=%s -> %s : %s]' % (ms, rootname,
+                                                              data_column)
+        casa_image(ms, rootname, data_column, img_size, img_fov, ra0, dec0,
+                   wplanes)
+        print '*'*80
         print '  - Finished imaging in %.3fs' % (time.time()-t0)
+        print '*'*80
 
 if __name__ == "__main__":
     """If running the CASA imager, run with:

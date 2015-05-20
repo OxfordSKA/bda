@@ -31,29 +31,35 @@ def run_applycal(ms, cal_table):
 def main():
     tAll = time.time()
 
-    # # -----------------------------------------
-    # ms_in = os.path.join('vis', 'test_cor_ave.ms')
-    # ms = os.path.join('vis', 'test_cor_ave_cal.ms')
-    # cal_table = ms + '.gcal'
-    # # -----------------------------------------
+    # -------------------------------------------------------------------------
+    ms_in = os.path.join('vis', 'corrupted.ms')
+    ms = os.path.join('vis', 'calibrated.ms')
+    cal_table = ms[:-3] + '.gains'
+    # -------------------------------------------------------------------------
 
-    # copytree(ms_in, ms)
+    if os.path.isdir(ms):
+        shutil.rmtree(ms)
+    copytree(ms_in, ms)
 
-    # t0 = time.time()
-    # run_gaincal(ms, cal_table)
-    # print '+ Gaincal completed in %.3fs' % (time.time()-t0)
-    #
-    # t0 = time.time()
-    # run_applycal(ms, cal_table)
-    # print '+ Applycal completed in %.3fs' % (time.time()-t0)
-    #
-    # print '+ Total time = %.3fs' % (time.time()-tAll)
+    tAll = time.time()
 
-    # -----------------------------------------
-    ms_in = os.path.join('vis', 'test_cor.ms')
-    ms = os.path.join('vis', 'test_cal.ms')
-    cal_table = ms + '.gcal'
-    # -----------------------------------------
+    t0 = time.time()
+    run_gaincal(ms, cal_table)
+    print '+ Gaincal completed in %.3fs' % (time.time()-t0)
+
+    t0 = time.time()
+    run_applycal(ms, cal_table)
+    print '+ Applycal completed in %.3fs' % (time.time()-t0)
+
+
+    # -------------------------------------------------------------------------
+    ms_in = os.path.join('vis', 'corrupted_ave.ms')
+    ms = os.path.join('vis', 'calibrated_ave.ms')
+    cal_table = ms + '.gains'
+    # -------------------------------------------------------------------------
+
+    if os.path.isdir(ms):
+        shutil.rmtree(ms)
 
     copytree(ms_in, ms)
 
