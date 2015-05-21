@@ -169,6 +169,7 @@ def main():
         size=10, ha='left', va='top')
 
     plt.savefig(os.path.join('images', 'bda_sim_images.eps'))
+    plt.savefig(os.path.join('images', 'bda_sim_images.png'))
     plt.show()
 
 

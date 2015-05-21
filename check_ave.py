@@ -9,7 +9,7 @@ dtype=[('t',  'f8'), ('uu', 'f8'), ('vv', 'f8'), ('ww', 'f8'),
 #dtype='f8,f8,f8,f8,i4,i4,c16'
 
 
-ms = os.path.join('vis', 'test_cor.ms')
+ms = os.path.join('vis', 'corrupted.ms')
 tb.open(ms)
 orig_data = tb.getcol('DATA')
 orig_uvw = tb.getcol('UVW')
@@ -35,7 +35,7 @@ print '+ No. vis for baseline_pq in original data %i' % orig_pq.shape[0]
 orig_intervals = np.round(orig_pq['t']/1.6)
 
 
-ms = os.path.join('vis', 'test_cor_ave.ms')
+ms = os.path.join('vis', 'corrupted_ave.ms')
 tb.open(ms)
 ave_data = tb.getcol('DATA')
 ave_uvw = tb.getcol('UVW')
