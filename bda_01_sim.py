@@ -46,13 +46,14 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
     if not os.path.isdir(os.path.dirname(ms)):
         os.mkdir(os.path.dirname(ms))
     # --------------------------------------------------------------
-    dt = 1.6  # seconds
-    num_times = 50
+    dt = 0.08  # seconds
+    num_times = 1000
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg
     lat0 = -30.739475  # deg
-    telescope = 'models/SKA1_mid_combined_rmax_5.000_km.tm'
+    # telescope = 'models/SKA1_mid_combined_rmax_5.000_km.tm'
+    telescope = 'models/SKA1_mid_combined.tm'
     channel_bw = 0.0  # Hz
     # --------------------------------------------------------------
     s = {}
@@ -97,7 +98,7 @@ def oskar_sim():
     # ---------------------------------------------
     create_sky_model(sky, [ra0], [dec0+0.9], [1.0])
     create_settings(ini, sky, ms, ra0, dec0)
-    run_interferometer(ini, verbose=False)
+    run_interferometer(ini, verbose=True)
     return ms
 
 def main():
