@@ -10,7 +10,8 @@ def copytree(src, dst, symlinks=False, ignore=None):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
         if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
+            # shutil.copytree(s, d, symlinks, ignore)
+            shutil.copytree(s, d)
         else:
             shutil.copy2(s, d)
 
@@ -31,6 +32,7 @@ def run_applycal(ms, cal_table):
 def main():
     tAll = time.time()
 
+    
     # -------------------------------------------------------------------------
     ms_in = os.path.join('vis', 'corrupted.ms')
     ms = os.path.join('vis', 'calibrated.ms')
@@ -38,7 +40,9 @@ def main():
     # -------------------------------------------------------------------------
 
     if os.path.isdir(ms):
+        print 'Removing existing ms : %s' % ms
         shutil.rmtree(ms)
+        
     copytree(ms_in, ms)
 
     tAll = time.time()
@@ -59,9 +63,12 @@ def main():
     # -------------------------------------------------------------------------
 
     if os.path.isdir(ms):
+        print 'Removing existing ms : %s' % ms
         shutil.rmtree(ms)
 
-    copytree(ms_in, ms)
+    print 'Copying %s to %s' % (ms_in, ms)
+    os.system('cp -r %s %s' % (ms_in, ms)) 
+    # copytree(ms_in, ms) # FIXME(BM) This command is Broken on SKA1 ... ?
 
     tAll = time.time()
 
@@ -76,3 +83,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
