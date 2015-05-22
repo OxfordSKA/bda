@@ -79,14 +79,14 @@ def main():
     all_ms = [ms for ms in os.listdir('vis') if ms[-2:] == 'ms']
     # rootname = 'images/cor_ave'
     img_size = [512, 512]
-    img_fov = [0.07, 0.07]  # deg
+    img_fov = [0.01, 0.01]  # deg
     # TODO(BM) load ra, dec from sky model
     ra0 = -90.35458487600000
     dec0 = -7.67112399060000
     wplanes = None
     # ---------------------------------------
 
-    t0 = time.time()
+
     for ms in all_ms:
         rootname = os.path.join('images', ms[:-3])
         ms = os.path.join('vis', ms)
@@ -97,6 +97,7 @@ def main():
             data_column = 'DATA'
         print '+ Imaging with CASA ... [ms=%s -> %s : %s]' % (ms, rootname,
                                                               data_column)
+        t0 = time.time()
         casa_image(ms, rootname, data_column, img_size, img_fov, ra0, dec0,
                    wplanes)
         print '*'*80
