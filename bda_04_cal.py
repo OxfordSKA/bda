@@ -17,9 +17,17 @@ def copytree(src, dst, symlinks=False, ignore=None):
 
 
 def run_gaincal(ms, cal_table):
-    gaincal(vis=ms, caltable=cal_table, field='', spw='', selectdata=False,
-            solint='int', refant='0', minblperant=1, minsnr=3, gaintype='G',
-            calmode='ap', append=False)
+    if not 'ave' in ms:
+        gaincal(vis=ms, caltable=cal_table, field='', spw='', selectdata=False,
+                solint='int', refant='0', minblperant=1, minsnr=3, gaintype='G',
+                calmode='ap', append=False)
+#    gaincal(vis=ms, caltable=cal_table, calmode='ap', append=False)
+    else:    
+        gaincal(vis=ms, caltable=cal_table, refant='0', 
+                solint='%.14fs' % (2.0*0.08), 
+                minsnr=3.0, calmode='ap', append=False)
+
+
 
 
 def run_applycal(ms, cal_table):
@@ -27,58 +35,79 @@ def run_applycal(ms, cal_table):
     applycal(vis=ms, field='', spw='', selectdata=False,
             gaintable=[cal_table], gainfield=[''], interp=['nearest'],
             calwt=[False], applymode='calonly', flagbackup=False)
+    # applycal(vis=ms, field='', spw='', selectdata=False,
+    #         gaintable=[cal_table], gainfield=[''], calwt=[False], 
+    #         applymode='calonly', flagbackup=False, interp=['linear'])
+
+
 
 
 def main():
     tAll = time.time()
 
-    
-    # -------------------------------------------------------------------------
-    ms_in = os.path.join('vis', 'corrupted.ms')
-    ms = os.path.join('vis', 'calibrated.ms')
-    cal_table = ms[:-3] + '.gains'
-    # -------------------------------------------------------------------------
+    non_bda = False
+    bda = True
 
-    if os.path.isdir(ms):
-        print 'Removing existing MS : %s' % ms
-        shutil.rmtree(ms)
+    if non_bda:
+        # -------------------------------------------------------------------------
+        ms_in = os.path.join('vis', 'corrupted.ms')
+        ms = os.path.join('vis', 'calibrated.ms')
+        cal_table = ms[:-3] + '.gains'
+        # -------------------------------------------------------------------------
 
-    copytree(ms_in, ms)
+        if os.path.isdir(ms):
+            print 'Removing existing MS : %s' % ms
+            shutil.rmtree(ms)
 
-    tAll = time.time()
+        copytree(ms_in, ms)
 
-    t0 = time.time()
-    run_gaincal(ms, cal_table)
-    print '+ Gaincal completed in %.3fs' % (time.time()-t0)
+        tAll = time.time()
 
-    t0 = time.time()
-    run_applycal(ms, cal_table)
-    print '+ Applycal completed in %.3fs' % (time.time()-t0)
+        t0 = time.time()
+        run_gaincal(ms, cal_table)
+        print '*'*80
+        print '+ Gaincal completed in %.3fs' % (time.time()-t0)
+        print '*'*80
+        print '\n'*3
+
+        t0 = time.time()
+        run_applycal(ms, cal_table)
+        print '*'*80
+        print '+ Applycal completed in %.3fs' % (time.time()-t0)
+        print '*'*80
+        print '\n'*3
 
 
-    # -------------------------------------------------------------------------
-    ms_in = os.path.join('vis', 'corrupted_ave.ms')
-    ms = os.path.join('vis', 'calibrated_ave.ms')
-    cal_table = ms[:-3] + '.gains'
-    # -------------------------------------------------------------------------
+    if bda:
+        # -------------------------------------------------------------------------
+        ms_in = os.path.join('vis', 'corrupted_ave.ms')
+        ms = os.path.join('vis', 'calibrated_ave.ms')
+        cal_table = ms[:-3] + '.gains'
+        # -------------------------------------------------------------------------
 
-    if os.path.isdir(ms):
-        print 'Removing existing MS : %s' % ms
-        shutil.rmtree(ms)
 
-    print 'Copying %s to %s' % (ms_in, ms)
-    os.system('cp -r %s %s' % (ms_in, ms)) 
-    # copytree(ms_in, ms) # FIXME(BM) This command is Broken on SKA1 ... ?
+        if os.path.isdir(ms):
+            print 'Removing existing MS : %s' % ms
+            shutil.rmtree(ms)
 
-    tAll = time.time()
+        print 'Copying %s to %s' % (ms_in, ms)
+        os.system('cp -r %s %s' % (ms_in, ms)) 
+        # copytree(ms_in, ms) # FIXME(BM) This command is Broken on SKA1 ... ?
 
-    t0 = time.time()
-    run_gaincal(ms, cal_table)
-    print '+ Gaincal completed in %.3fs' % (time.time()-t0)
+        tAll = time.time()
 
-    t0 = time.time()
-    run_applycal(ms, cal_table)
-    print '+ Applycal completed in %.3fs' % (time.time()-t0)
+        t0 = time.time()
+        run_gaincal(ms, cal_table)
+        print '*'*80
+        print '+ Gaincal completed in %.3fs' % (time.time()-t0)
+        print '*'*80
+        print '\n'*3
+
+        t0 = time.time()
+        run_applycal(ms, cal_table)
+        print '*'*80
+        print '+ Applycal completed in %.3fs' % (time.time()-t0)
+        print '*'*80
 
 
 if __name__ == "__main__":

@@ -88,6 +88,8 @@ def main():
 
 
     for ms in all_ms:
+        if not 'ave' in ms:
+            continue
         rootname = os.path.join('images', ms[:-3])
         ms = os.path.join('vis', ms)
 
