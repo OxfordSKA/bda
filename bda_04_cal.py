@@ -40,9 +40,15 @@ def main():
     # -------------------------------------------------------------------------
 
     if os.path.isdir(ms):
+<<<<<<< HEAD
         print 'Removing existing ms : %s' % ms
         shutil.rmtree(ms)
         
+=======
+        print 'Removing existing MS : %s' % ms
+        shutil.rmtree(ms)
+
+>>>>>>> 9b74e6a71065f780fa9416ebf11d67d8f6e2f7b8
     copytree(ms_in, ms)
 
     tAll = time.time()
@@ -59,11 +65,11 @@ def main():
     # -------------------------------------------------------------------------
     ms_in = os.path.join('vis', 'corrupted_ave.ms')
     ms = os.path.join('vis', 'calibrated_ave.ms')
-    cal_table = ms + '.gains'
+    cal_table = ms[:-3] + '.gains'
     # -------------------------------------------------------------------------
 
     if os.path.isdir(ms):
-        print 'Removing existing ms : %s' % ms
+        print 'Removing existing MS : %s' % ms
         shutil.rmtree(ms)
 
     print 'Copying %s to %s' % (ms_in, ms)

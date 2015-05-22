@@ -4,3 +4,5 @@ images
 *.last
 *.mat
 ini
+*.png
+bench_images_ska1
