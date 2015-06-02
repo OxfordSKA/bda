@@ -4,6 +4,7 @@
 #include <casacore/ms/MeasurementSets.h>
 #include <cstdio>
 #include <iostream>
+#include <cstdlib>
 #include <string>
 #include <complex>
 #include <cmath>
@@ -26,40 +27,59 @@ using casa::MeasurementSet;
 using casa::IPosition;
 using casa::ROMSColumns;
 
-
 using namespace casa;
 
+/**
+ * arcsinc(x) function taken from Obit. Uses Newton-Raphson method.
+ */
+double inv_sinc(double value) {
+    double x1 = 0.001;
+    for (int i = 0; i < 1000; ++i) {
+        double x0 = x1;
+        double a = x0 * M_PI;
+        x1 = x0 - ((sin(a) / a) - value) /
+                        ((a * cos(a) - M_PI * sin(a)) / (a * a));
+        if (fabs(x1 - x0) < 1.0e-6)
+            break;
+    }
+    return x1;
+}
+
+
+/*
+ * TODO(BM):
+ * - Load and average in blocks (base block length on dt_max).
+ * - Handle polarisation
+ * - Copy MS sub-tables (antenna etc)
+ * - Evaluate stats. on averages in the same way as mstransform()
+ */
+
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        cout << "Usage: bda <ms>" << endl;
+    if (argc != 5) {
+        cout << "Usage:" << endl;
+        cout << "  ./bda <ms> <max_fact> <fov> <idt_max>" << endl << endl;
+        cout << "Where:" << endl;
+        cout << "  ms       Path of measurement set to be averaged." << endl;
+        cout << "  max_fact Maximum amplitude reduction factor. (eg. 1.01)" << endl;
+        cout << "  fov      Field-of-view radius in degrees associated " << endl;
+        cout << "           with the amplitude reduction factor" << endl;
+        cout << "  idt_max  Maximum averaging time in terms of non-averaged" << endl;
+        cout << "           correlator dumps." << endl << endl;
+        cout << "Example:" << endl;
+        cout << "  ./bda vis.ms 1.01 0.9 4" << endl;
         return 0;
     }
     string filename = string(argv[1]);
-    string filename_out = filename+".bda";
-
-#if 0
-
-    Table t(filename);
-    TableColumn col_uvw = TableColumn(t, "UVW");
-    TableExprNode col_uvw_ = t.col("UVW");
-
-    cout << "No. rows  : " << col_uvw.nrow() << endl;
-    ArrayColumn<Double> a_uvw(t, "UVW");
-
-    const Array<Double> x = a_uvw.get(0);
-    double uu = *(x[0].data());
-    double vv = *(x[1].data());
-    double ww = *(x[2].data());
-    cout << uu << " " << vv << " " << ww << endl;
-
-    // TableColumn col_time = TableColumn(t, "TIME");
-
-#else
+    double max_fact = atof(argv[2]);
+    double fov = atof(argv[3]);
+    int dt_max_i = atoi(argv[4]);
+    string rootname = filename.substr(0, filename.find_last_of("."));
+    string filename_out = rootname+"_bda.ms";
 
     struct timeval timer_all[2];
     gettimeofday(&timer_all[0], NULL);
 
-    // MeasurementSet ms(filename);
+    // const MeasurementSet ms(filename);
     const Table ms(filename);
     uInt num_rows = ms.nrow();
 
@@ -68,42 +88,93 @@ int main(int argc, char** argv) {
     bool valueCopy = false;
     ms.deepCopy(filename_out, Table::New, valueCopy, Table::LittleEndian,
                 noRows);
-    // TODO(BM) copy sub-tables (antenna table etc.).
     Table ms_out(filename_out, Table::Update);
     ArrayColumn<Double> col_uvw_out(ms_out, "UVW");
     ScalarColumn<Double> col_time_out(ms_out, "TIME");
+    ScalarColumn<Double> col_time_centroid_out(ms_out, "TIME_CENTROID");
     ScalarColumn<Int> col_ant1_out(ms_out, "ANTENNA1");
     ScalarColumn<Int> col_ant2_out(ms_out, "ANTENNA2");
+    ScalarColumn<Double> col_interval_out(ms_out, "INTERVAL");
+    ScalarColumn<Double> col_exposure_out(ms_out, "EXPOSURE");
     ArrayColumn<Complex> col_data_out(ms_out, "DATA");
+    ArrayColumn<Float> col_weight_out(ms_out, "WEIGHT");
+    ArrayColumn<Float> col_sigma_out(ms_out, "SIGMA");
+
 
     // Load antenna table to get number of antennas.
     const Table ant(filename+"/ANTENNA");
     uInt num_antennas = ant.nrow();
+    ant.deepCopy(filename_out+"/ANTENNA", Table::New, true,
+                 Table::LittleEndian, false);
 
     // Work out number of baselines and number of times.
     uInt num_baselines = num_antennas * (num_antennas - 1) / 2;
     uInt num_times = num_rows / num_baselines;
 
     // Load observation table to get time range (needed for delta_t).
-    Table obs(filename+"/OBSERVATION");
-    ArrayColumn<Double> time_range(obs, "TIME_RANGE");
-    double t0 = *static_cast<double*>(time_range.get(0)[0].data());
-    double t1 = *static_cast<double*>(time_range.get(0)[1].data());
+    const Table obs(filename+"/OBSERVATION");
+    obs.deepCopy(filename_out+"/OBSERVATION", Table::New, true,
+                 Table::LittleEndian, false);
+    const ArrayColumn<Double> time_range(obs, "TIME_RANGE");
+    const Array<Double> time_range_cell = time_range.get(0);
+    double t0 = time_range_cell.data()[0];
+    double t1 = time_range_cell.data()[1];
     double obs_length_s = t1 - t0;
     double delta_t = obs_length_s / num_times;
 
+    // Load frequency from MS. (require 1 freq)
+    const Table spectral_window(filename+"/SPECTRAL_WINDOW");
+    spectral_window.deepCopy(filename_out+"/SPECTRAL_WINDOW", Table::New, true,
+                             Table::LittleEndian, false);
+    const ArrayColumn<Double> chan_freq(spectral_window, "CHAN_FREQ");
+    const Array<Double> freqs0 = chan_freq.get(0);
+    double freq = freqs0.data()[0];
+    double wavelength = 299792458.0 / freq;
+
+    // Copy other sub-tables. (ANTENNA, OBSERVATION, SPECTRAL_WINDOW already
+    // done)
+    vector<string> sub_tables;
+    sub_tables.push_back("/DATA_DESCRIPTION");
+    sub_tables.push_back("/FEED");
+    sub_tables.push_back("/FIELD");
+    sub_tables.push_back("/HISTORY");
+    sub_tables.push_back("/POLARIZATION");
+    for (vector<string>::iterator it = sub_tables.begin();
+                    it != sub_tables.end(); ++it) {
+        const Table sub_table(filename+*it);
+        sub_table.deepCopy(filename_out+*it, Table::New, true,
+                           Table::LittleEndian, false);
+    }
+
+    // Evaluate averaging parameters.
+    double dt_max = dt_max_i * delta_t;
+    double delta_uvw = inv_sinc(1.0 / max_fact) / (fov * (M_PI / 180.0));
+    delta_uvw *= wavelength;
+    double duvw_max = delta_uvw;
+
     printf("%s\n", string(80, '-').c_str());
-    printf("MS            : %s\n", filename.c_str());
-    printf("No. rows      : %i\n", num_rows);
-    printf("No. antennas  : %i\n", num_antennas);
-    printf("No. baselines : %i\n", num_baselines);
-    printf("No. times     : %i\n", num_times);
-    printf("delta_t       : %.16f\n", delta_t);
+    printf("Input MS        : %s\n", filename.c_str());
+    printf("  No. rows      : %i\n", num_rows);
+    printf("  No. antennas  : %i\n", num_antennas);
+    printf("  No. baselines : %i\n", num_baselines);
+    printf("  No. times     : %i\n", num_times);
+    printf("  freq.         : %.16f\n", freq);
+    printf("  delta_t       : %.16f\n", delta_t);
+    printf("Averaging:\n");
+    printf("  MS out        : %s\n", filename_out.c_str());
+    printf("  max_fact      : %f\n", max_fact);
+    printf("  FoV           : %f deg.\n", fov);
+    printf("  dt_max_i      : %i\n", dt_max_i);
+    printf("  dt_max        : %f s\n", dt_max);
+    printf("  duvw_max      : %f m\n", duvw_max);
     printf("%s\n", string(80, '-').c_str());
+    printf("\n");
 
     const ArrayColumn<Double> col_uvw(ms, "UVW");
+    const IPosition uvw_shape = col_uvw.shapeColumn();
     const ScalarColumn<Double> col_time(ms, "TIME");
     const ArrayColumn<Complex> col_data(ms, "DATA");
+    const IPosition data_shape = col_data.shapeColumn();
 
     std::vector<double> uu_(num_rows);
     std::vector<double> vv_(num_rows);
@@ -111,24 +182,27 @@ int main(int argc, char** argv) {
     std::vector<double> time_(num_rows);
     std::vector<Complex> data_(num_rows);
     double* uu = &uu_[0];
-    double* vv = &uu_[0];
-    double* ww = &uu_[0];
+    double* vv = &vv_[0];
+    double* ww = &ww_[0];
     double* time = &time_[0];
     Complex* data = &data_[0];
 
     struct timeval timer_load[2];
     gettimeofday(&timer_load[0], NULL);
+    Array<Double> temp_uvw(uvw_shape);
+    // TODO(BM) deal with polarised data files.
     for (uInt i = 0; i < num_rows; ++i) {
-        uu[i] = *(col_uvw.get(i)[0].data());
-        vv[i] = *(col_uvw.get(i)[1].data());
-        ww[i] = *(col_uvw.get(i)[2].data());
+        temp_uvw = col_uvw.get(i);
+        uu[i] = temp_uvw.data()[0];
+        vv[i] = temp_uvw.data()[1];
+        ww[i] = temp_uvw.data()[2];
         time[i] = col_time.get(i);
-        data[i] = *(col_data.get(i).data());
+        data[i] = col_data.get(i).data()[0];
     }
     gettimeofday(&timer_load[1], NULL);
     double elapsed = (timer_load[1].tv_sec - timer_load[0].tv_sec) +
                     (timer_load[1].tv_usec - timer_load[0].tv_usec) / 1.0e6;
-    cout << "+ Loading data took  : " << elapsed << " s" << endl;
+    cout << "+ Loading data took    : " << elapsed << " s" << endl;
 
     // Buffers of deltas along the baseline in the current average.
     std::vector<double> duvw_(num_baselines, 0.0);
@@ -147,12 +221,11 @@ int main(int argc, char** argv) {
     double* ave_ww = &ave_ww_[0];
     double* ave_t = &ave_t_[0];
     uInt* ave_count = &ave_count_[0];
-
+    Array<Double> bda_uvw(uvw_shape);
+    Array<Complex> bda_data(data_shape);
     Complex* ave_data = &ave_data_[0];
-
-    // TODO(BM) work these out properly..
-    double dt_max = 4 * delta_t;
-    double duvw_max = 2.2;
+    uInt num_pols = 1;  // TODO(BM) get this from the MS and use elsewhere too.
+    Vector<Float> bda_weight(num_pols);
 
     struct timeval timer_loop[2];
     gettimeofday(&timer_loop[0], 0);
@@ -195,10 +268,10 @@ int main(int argc, char** argv) {
                     b_dt = (b_t1 - b_t);
                 }
 
-                if (b == 0) {
-                    printf("  b:%i t:%i b_duvw:%f duvw:%f b_dt:%f dt:%f, b_uu:%f\n",
-                           b, t, b_duvw, duvw[b], b_dt, dt[b], b_uu);
-                }
+//                if (b == 0) {
+//                    printf("  b:%i t:%i b_duvw:%f duvw:%f b_dt:%f dt:%f, b_uu:%f\n",
+//                           b, t, b_duvw, duvw[b], b_dt, dt[b], b_uu);
+//                }
 
                 // If last time or if next point extends beyond average save out
                 // average baseline and reset average, else accumulate current
@@ -206,23 +279,36 @@ int main(int argc, char** argv) {
                 if (t == num_times - 1 || duvw[b]+b_duvw >= duvw_max
                                 || dt[b] + b_dt >= dt_max) {
 
-                    double bda_uu = ave_uu[b] / ave_count[b];
-                    double bda_vv = ave_vv[b] / ave_count[b];
-                    double bda_ww = ave_ww[b] / ave_count[b];
-                    double bda_t  = ave_t[b] / ave_count[b];
-                    double bda_re = ave_data[b].real() / ave_count[b];
-                    double bda_im = ave_data[b].imag() / ave_count[b];
-                    Complex bda_data(bda_re, bda_im);
+                    uInt bda_count = ave_count[b];
+                    double bda_uu = ave_uu[b] / bda_count;
+                    double bda_vv = ave_vv[b] / bda_count;
+                    double bda_ww = ave_ww[b] / bda_count;
+                    double bda_t  = ave_t[b] / bda_count;
+                    double bda_re = ave_data[b].real() / bda_count;
+                    double bda_im = ave_data[b].imag() / bda_count;
+                    bda_data[0] = Complex(bda_re, bda_im);
                     ms_out.addRow(1, true);
                     uInt outrow = ms_out.nrow() - 1;
+                    bda_uvw[0] = bda_uu;
+                    bda_uvw[1] = bda_vv;
+                    bda_uvw[2] = bda_ww;
+                    col_uvw_out.put(outrow, bda_uvw);
+                    col_ant1_out.put(outrow, (int)a1);
+                    col_ant2_out.put(outrow, (int)a2);
                     col_time_out.put(outrow, bda_t);
-                    col_ant1_out.put(outrow, a1);
-                    col_ant2_out.put(outrow, a2);
-                    if (b == 0) {
-                        printf("  count:%i uu:(%f) %f\n", ave_count[b], bda_uu, ave_uu[b]);
-                        cout << endl;
-                    }
+                    col_time_centroid_out.put(outrow, bda_t);
+                    col_data_out.put(outrow, bda_data);
+                    col_interval_out.put(outrow, bda_count * delta_t);
+                    col_exposure_out.put(outrow, bda_count * delta_t);
+                    bda_weight[0] = (float)ave_count[b];
+                    col_weight_out.put(outrow, bda_weight);
+                    double sigma = 1.0 / sqrt(static_cast<float>(bda_count));
+                    col_sigma_out.put(outrow, Vector<Float>(num_pols, sigma));
 
+//                    if (b == 0) {
+//                        printf("  count:%i uu:(%f) %f\n", ave_count[b], bda_uu, ave_uu[b]);
+//                        cout << endl;
+//                    }
                     duvw[b] = 0.0;
                     dt[b] = 0.0;
                     ave_count[b] = 0;
@@ -241,16 +327,14 @@ int main(int argc, char** argv) {
     gettimeofday(&timer_loop[1], 0);
     elapsed = (timer_loop[1].tv_sec - timer_loop[0].tv_sec) +
                     (timer_loop[1].tv_usec - timer_loop[0].tv_usec) / 1.0e6;
-    cout << "+ Loop timer elapsed : " << elapsed << " s" << endl;
-    cout << "+ Number of BDA rows : " << ms_out.nrow() << endl;
-    cout << "  - Data reduction   : " << ms.nrow()/(double)ms_out.nrow() << ":1" << endl;
+    cout << "+ Loop timer elapsed   : " << elapsed << " s" << endl;
+    cout << "  - Number of BDA rows : " << ms_out.nrow() << endl;
+    cout << "  - Data reduction     : " << ms.nrow()/(double)ms_out.nrow() << ":1" << endl;
 
     gettimeofday(&timer_all[1], NULL);
     elapsed = (timer_all[1].tv_sec - timer_all[0].tv_sec) +
                     (timer_all[1].tv_usec - timer_all[0].tv_usec) / 1.0e6;
-    cout << "+ Total time elapsed : " << elapsed << " s" << endl;
-
-#endif
+    cout << "+ Total time elapsed   : " << elapsed << " s" << endl;
 
     return 0;
 }

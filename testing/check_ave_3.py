@@ -3,6 +3,7 @@
 
 import os
 import numpy as np
+from progressbar import ProgressBar, Percentage, Bar, ETA
 
 
 def get_delta_uv_max(ms, fov_radius, max_fact):
@@ -81,7 +82,7 @@ def load_ms(ms):
 # -----------------------------------------------------------------------------
 ms = os.path.join('vis', 'model.ms')
 ms_bda_1 = os.path.join('vis', 'model_mstransform_ave.ms')
-ms_bda_2 = os.path.join('vis', 'model_ave.ms')
+ms_bda_2 = os.path.join('vis', 'model_bda.ms')
 # -----------------------------------------------------------------------------
 
 num_antennas = get_num_antennas(ms)
@@ -99,15 +100,27 @@ if os.path.isdir(ms_bda_2):
 check_fails = True
 max_diff = 0
 if check_fails:
+    print 'No. rows in %s : %i' % (ms_bda_1, vis_bda_1.shape[0])
+    print 'No. rows in %s : %i' % (ms_bda_2, vis_bda_2.shape[0])
+    print 'Checking MS for averaging differences...'
+    widgets = [Percentage(), ' ', Bar(), ' ~', ETA()]
+    pbar = ProgressBar(widgets=widgets, maxval=len(vis))
+    pbar.start()
+    i = 0
     for p in range(0, num_antennas):
         for q in range(p + 1, num_antennas):
+            pbar.update(i + 1)
             vis_bda_1_pq = vis_bda_1[vis_bda_1['a1'] == p]
             vis_bda_1_pq = vis_bda_1_pq[vis_bda_1_pq['a2'] == q]
             vis_bda_2_pq = vis_bda_2[vis_bda_2['a1'] == p]
             vis_bda_2_pq = vis_bda_2_pq[vis_bda_2_pq['a2'] == q]
             diff = len(vis_bda_1_pq) - len(vis_bda_2_pq)
             max_diff = max(max_diff, diff)
-            print '%-3i %-3i : %i %s' % (p, q, diff, ('***' if diff else ''))
+            i += 1
+            if diff:
+                print '%-3i %-3i : %i %s' % \
+                      (p, q, diff, ('***' if diff else ''))
+    pbar.finish()
     print 'max diff : %i' % max_diff
 
 # Check averaging condition for a single baseline

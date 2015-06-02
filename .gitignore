@@ -8,3 +8,5 @@ ini
 bench_images_ska1
 .cproject
 .project
+src/bda
+bench_02
