@@ -139,7 +139,7 @@ for i in range(0, num_times):
     duu = orig_pq['uu'][i]-orig_pq['uu'][i0]
     dvv = orig_pq['vv'][i]-orig_pq['vv'][i0]
     dww = orig_pq['ww'][i]-orig_pq['ww'][i0]
-    duvw = (duu**2+dvv**2+dww**2)*0.5
+    duvw = (duu**2+dvv**2+dww**2)**0.5
     dt = (orig_pq['t'][i]-orig_pq['t'][i0])
     luvw = (orig_pq['uu'][i]**2+orig_pq['vv'][i]**2+orig_pq['ww'][i]**2)**0.5
     print '%2i -  %f  - %f - %f' %  (i, duvw, luvw, dt)

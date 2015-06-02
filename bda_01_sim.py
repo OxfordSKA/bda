@@ -46,8 +46,8 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
     if not os.path.isdir(os.path.dirname(ms)):
         os.mkdir(os.path.dirname(ms))
     # --------------------------------------------------------------
-    dt = 0.08  # seconds
-    num_times = 50
+    dt = 1.6  # seconds
+    num_times = 10
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg

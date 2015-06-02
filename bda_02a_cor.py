@@ -85,6 +85,9 @@ def get_num_antennas(ms):
     tb.close()
     return num_stations
 
+
+# TODO(BM) split this function into generating and applying gains. The apply
+# can then be reused.
 def corrupt_data(ms):
     num_antennas = get_num_antennas(ms)
     num_times, time_range, length, dt = get_time_info(ms)
@@ -194,6 +197,8 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
         gain[1] = 1.0 + 0.0j
         tb.putcell('CPARAM', row, gain)
         tb.putcell('TIME', row, time_range[0] + t * dt)
+
+    # TODO(BM) Consider sorting the MS data into baseline time order first?
 
     tb.open(cal_table, nomodify=False)
     for s in range(1, num_stations):

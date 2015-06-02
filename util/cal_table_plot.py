@@ -23,8 +23,8 @@ def load_gains(cal_table):
 def main():
     # ------------------------------------------------------------
     # cal_table = os.path.join('vis', 'corrupted.gains')
-    cal_table = os.path.join('vis', 'calibrated.gains')
-    plot_num_stations = 4  # Number of stations to plot gains for
+    cal_table = os.path.join('bench_02', 'calibrated.gains')
+    plot_num_stations = 10  # Number of stations to plot gains for
     # ------------------------------------------------------------
     gains, num_antennas, num_times, dt = load_gains(cal_table)
     if plot_num_stations == -1:

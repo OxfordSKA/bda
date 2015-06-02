@@ -33,12 +33,14 @@ def load_gains(cal_table):
 
     return gains, num_antennas
 
-load_data = False
-if load_data:
+
+try:
+    gains_cal
+except NameError:
     # ----------------------------------------------------------------------
-    cal_table_cal_ave = os.path.join('vis', 'calibrated_ave.gains')
-    cal_table_cal = os.path.join('vis', 'calibrated.gains')
-    cal_table_cor = os.path.join('vis', 'corrupted.gains')
+    cal_table_cal_ave = os.path.join('bench_02', 'calibrated_ave.gains')
+    cal_table_cal = os.path.join('bench_02', 'calibrated.gains')
+    cal_table_cor = os.path.join('bench_02', 'corrupted.gains')
     # ----------------------------------------------------------------------
 
     t0 = time.time()
@@ -189,12 +191,15 @@ if make_plot:
         ax.set_ylabel('gain phase check [deg]')
         ax.grid()
 
+        pp.draw()
+        pp.savefig('check_gains_01.png')
+
 
     fig = pp.figure()
 
 
 
-    for i in range(0, 1):
+    for i in range(50, 100):
         # Obtain gains for antenna a1 with phase referene of antenna a2
         a1 = i
         a2 = 0
@@ -216,14 +221,16 @@ if make_plot:
         ax.set_title('Gains antenna %i' % a1)
         x = gains_cal_ave_a['time']-gains_cal_ave_a['time'][0]
         y = np.abs(gains_cal_ave_a['cparam'][:, 0])
-        ax.plot(x, y, 'g.', markerfacecolor='None', markeredgecolor='g', ms=3, lw=2,
-                label='BDA calibrated')
+        ax.plot(x, y, 'g+', markerfacecolor='None', markeredgecolor='g', ms=8, lw=3,
+                mew=2, label='BDA calibrated')
         x = gains_cal_a['time']-gains_cal_a['time'][0]
         y = np.abs(gains_cal_a['cparam'][:, 0])
-        ax.plot(x, y, 'b.', markerfacecolor='None', markeredgecolor='b', ms=3, lw=2,
+        ax.plot(x, y, 'bo', markerfacecolor='None', markeredgecolor='b', ms=3, lw=3,
                 label='calibrated')
         ax.legend(ncol=2, prop={'size':8})
         ax.grid()
         pp.draw()
-        pp.show()
+        pp.show(block=False)
+        pp.savefig('check_gains_ave_%03i.png' % a1)
         time.sleep(0.2)
+    pp.show(block=True)
