@@ -1,11 +1,8 @@
 #!/usr/bin/python -u
 
-"""
-Simulate a Measurement Set for use with BDA tests.
-"""
+"""Simulate a Measurement Set for use with BDA tests."""
 
 import os
-import numpy as np
 import time
 import subprocess
 
@@ -27,7 +24,7 @@ def dict_to_ini(settings_dict, ini):
         os.makedirs(ini_dir)
     for group in sorted(settings_dict):
         for key in sorted(settings_dict[group]):
-            key_ = group+key
+            key_ = group + key
             value_ = settings_dict[group][key]
             subprocess.call(["oskar_settings_set", "-q", ini,
                             key_, str(value_)])
@@ -46,8 +43,8 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
     if not os.path.isdir(os.path.dirname(ms)):
         os.mkdir(os.path.dirname(ms))
     # --------------------------------------------------------------
-    dt = 1.6  # seconds
-    num_times = 10
+    dt = 0.1  # seconds
+    num_times = 20
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg
@@ -67,8 +64,9 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
     }
     s['observation/'] = {
         'start_frequency_hz': freq,
+        'num_channels': 1,
         'start_time_utc': start_time,
-        'length': num_times*dt,
+        'length': num_times * dt,
         'num_time_steps': num_times,
         'phase_centre_ra_deg': ra0,
         'phase_centre_dec_deg': dec0
@@ -88,7 +86,9 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
     dict_to_ini(s, ini_file)
     return s
 
+
 def oskar_sim():
+    """Run the OSKAR simulation."""
     # ---------------------------------------------
     ini = os.path.join('ini', 'test.ini')
     ms = os.path.join('vis', 'model.ms')
@@ -96,17 +96,15 @@ def oskar_sim():
     ra0 = -90.3545848760  # deg
     dec0 = -8.5711239906  # deg
     # ---------------------------------------------
-    create_sky_model(sky, [ra0], [dec0+0.9], [1.0])
+    create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
     create_settings(ini, sky, ms, ra0, dec0)
     run_interferometer(ini, verbose=True)
     return ms
 
-def main():
+
+if __name__ == "__main__":
     t0 = time.time()
     print '+ MS simulation...'
     ms = oskar_sim()
-    print '  - Finished simulation in %.3fs' % (time.time()-t0)
+    print '  - Finished simulation in %.3fs' % (time.time() - t0)
     print '  - MS : %s' % ms
-
-if __name__ == "__main__":
-    main()

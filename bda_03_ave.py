@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # Average the model data.
     t0 = time.time()
     ms_in = os.path.join('vis', 'model.ms')
-    ms_out = os.path.join('vis', 'model_ave.ms')
+    ms_out = os.path.join('vis', 'model_mstransform.ms')
     if os.path.isdir(ms_in):
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \
