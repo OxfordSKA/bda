@@ -106,8 +106,36 @@ def main():
         print '  - Finished imaging in %.3fs' % (time.time()-t0)
         print '*'*80
 
+
+def main_temp():
+    import os
+    import time
+
+    # ---------------------------------------
+    img_size = [512, 512]
+    img_fov = [0.01, 0.01]  # deg
+    # TODO(BM) load ra, dec from sky model
+    ra0 = -90.35458487600000
+    dec0 = -7.67112399060000
+    wplanes = None
+    # ---------------------------------------
+
+    # casa_image('vis/MS02.ms', 'images/MS02_DATA', 'DATA', 
+    #         img_size, img_fov, ra0, dec0, wplanes)
+    # casa_image('vis/MS02.ms', 'images/MS02_MODEL_DATA', 'MODEL_DATA', 
+    #         img_size, img_fov, ra0, dec0, wplanes)
+    # casa_image('vis/MS02.ms', 'images/MS02_CORRECTED_DATA', 'CORRECTED_DATA', 
+    #         img_size, img_fov, ra0, dec0, wplanes)
+    casa_image('vis/MS08.ms', 'images/MS08_DATA', 'DATA', 
+            img_size, img_fov, ra0, dec0, wplanes)
+    casa_image('vis/MS08.ms', 'images/MS08_MODEL_DATA', 'MODEL_DATA', 
+            img_size, img_fov, ra0, dec0, wplanes)
+    casa_image('vis/MS08.ms', 'images/MS08_CORRECTED_DATA', 'CORRECTED_DATA', 
+            img_size, img_fov, ra0, dec0, wplanes)
+
 if __name__ == "__main__":
     """If running the CASA imager, run with:
             casa --nologger --nogui --log2term -c bda_05_img.py
     """
     main()
+    #main_temp()

@@ -39,4 +39,4 @@ for s in sorted(sub_tables):
         tb.close()
 
 # Write data to MATLAB file.
-scipy.io.savemat(ms_name + '.mat', d, do_compression=True)
+scipy.io.savemat(ms_name + '.mat', d)
