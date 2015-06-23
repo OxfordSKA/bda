@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u -OO
+#!/usr/bin/env python -u -O
 """Module to difference two FITS images."""
 
 
