@@ -1,18 +1,19 @@
-#!/usr/bin/python -u
+# -*- coding: utf-8 -*-
 
 """Simulate a Measurement Set for use with BDA tests."""
 
 import os
+import collections
 import time
 import subprocess
 
 
-def create_sky_model(sky_file, ra, dec, I):
+def create_sky_model(sky_file, ra, dec, stokes_i_flux):
     """Create an OSKAR sky model."""
     if not os.path.dirname(sky_file):
         os.mkdir(os.path.dirname(sky_file))
     fh = open(sky_file, 'w')
-    for ra_, dec_, I_ in zip(ra, dec, I):
+    for ra_, dec_, I_ in zip(ra, dec, stokes_i_flux):
         fh.write('%.14f, %.14f, %.3f' % (ra_, dec_, I_))
     fh.close()
 
@@ -49,11 +50,10 @@ def create_settings(ini_file, sky, ms, ra0, dec0):
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg
     lat0 = -30.739475  # deg
-    # telescope = 'models/SKA1_mid_combined_rmax_5.000_km.tm'
     telescope = 'models/SKA1_mid_combined.tm'
     channel_bw = 0.0  # Hz
     # --------------------------------------------------------------
-    s = {}
+    s = collections.OrderedDict()
     s['simulator/'] = {
         'max_sources_per_chunk': 1,
         'double_precision': 'true',
@@ -98,7 +98,7 @@ def oskar_sim():
     # ---------------------------------------------
     create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
     create_settings(ini, sky, ms, ra0, dec0)
-    run_interferometer(ini, verbose=True)
+    run_interferometer(ini)
     return ms
 
 
