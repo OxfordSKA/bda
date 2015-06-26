@@ -1,5 +1,6 @@
 /* Copyright (c) 2015, The University of Oxford
    BDS 3-Clause license (see LICENSE) */
+#include <sys/time.h>
 #include <casacore/tables/Tables.h>
 #include <casacore/ms/MeasurementSets.h>
 #include <cstdio>
@@ -10,7 +11,6 @@
 #include <cmath>
 #include <vector>
 #include <cassert>
-#include <sys/time.h>
 
 using std::cout;
 using std::cerr;
@@ -18,46 +18,33 @@ using std::endl;
 using std::vector;
 using std::complex;
 using std::flush;
+
+using casa::MeasurementSet;
 using casa::Table;
 using casa::TableColumn;
 using casa::TableExprNode;
 using casa::Array;
+using casa::Matrix;
+using casa::ArrayColumn;
+using casa::ScalarColumn;
+using casa::ROMSColumns;
+using casa::IPosition;
 using casa::Double;
+using casa::Float;
+using casa::Complex;
 using casa::Vector;
 using casa::uInt;
-using casa::ArrayColumn;
-using casa::MeasurementSet;
-using casa::IPosition;
-using casa::ROMSColumns;
+using casa::Int;
+using casa::Bool;
 
-using namespace casa;
-
-double timer_elapsed(struct timeval& t1, struct timeval& t2) {
+double timer_elapsed(const struct timeval& t1, const struct timeval& t2) {
     return (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec) / 1.0e6;
-}
-
-void progressBar(int percent) {
-    std::string bar;
-    for (int i = 0; i < 50; ++i) {
-        if (i < (percent/2)) {
-            bar.replace(i, 1, "=");
-        }
-        else if (i == (percent/2)) {
-            bar.replace(i, 1, ">");
-        }
-        else {
-            bar.replace(i,1," ");
-        }
-    }
-    std::cout << "\r" "[" << bar << "] ";
-    std::cout.width(3);
-    std::cout << percent << "%   " << std::flush;
 }
 
 void copy_ms(string ms_in, string ms_out) {
     const Table ms(ms_in);
     ms.deepCopy(ms_out, Table::New, false, Table::LittleEndian, true);
-    // TODO (BM) get list of sub-tables automatically?
+    // TODO(BM) get list of sub-tables automatically?
     vector<string> sub_tables;
     sub_tables.push_back("/ANTENNA");
     sub_tables.push_back("/OBSERVATION");
@@ -98,17 +85,16 @@ double inv_sinc(double value) {
  * - Handle polarisation
  * - Handle MODEL_DATA and CORRECTED_DATA columns.
  */
-
 int main(int argc, char** argv) {
     if (argc != 5) {
         cout << "Usage:" << endl;
         cout << "  ./bda <ms> <max_fact> <fov> <idt_max>" << endl << endl;
         cout << "Where:" << endl;
         cout << "  ms       Path of measurement set to be averaged." << endl;
-        cout << "  max_fact Maximum amplitude reduction factor. (eg. 1.01)" << endl;
-        cout << "  fov      Field-of-view radius in degrees associated " << endl;
+        cout << "  max_fact Maximum amplitude reduction factor. (eg. 1.01)\n";
+        cout << "  fov      Field-of-view radius in degrees associated\n";
         cout << "           with the amplitude reduction factor" << endl;
-        cout << "  idt_max  Maximum averaging time in terms of non-averaged" << endl;
+        cout << "  idt_max  Maximum averaging time in terms of non-averaged\n";
         cout << "           correlator dumps." << endl << endl;
         cout << "Example:" << endl;
         cout << "  ./bda vis.ms 1.01 0.9 4" << endl;
@@ -135,8 +121,7 @@ int main(int argc, char** argv) {
            timer_elapsed(timer_copy[0], timer_copy[1]));
 
     // Load input measurement set.
-    // -------------------------------------------------------------------------
-    // -------------------------------------------------------------------------
+    // ************************************************************************
     struct timeval timer_load[2];
     gettimeofday(&timer_load[0], NULL);
     cout << "+ Loading data ..." << flush;
@@ -178,7 +163,7 @@ int main(int argc, char** argv) {
     double wavelength = 299792458.0 / freq;
 
     // Load observation table to get time range (needed for delta_t).
-    cout << "\r" "+ Loading data : Polarization table." << flush;
+    cout << "\r" "+ Loading data : Polarisation table." << flush;
     const Table pol(filename+"/POLARIZATION");
     const ArrayColumn<Int> corr_type(pol, "CORR_TYPE");
     const Vector<Int> corr_type_cell = corr_type.get(0);
@@ -213,8 +198,8 @@ int main(int argc, char** argv) {
     gettimeofday(&timer_load[1], NULL);
     printf("\r+ Loading data completed in %.3f s                 \n",
            timer_elapsed(timer_load[0], timer_load[1]));
-    // -------------------------------------------------------------------------
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
     // Evaluate averaging parameters.
     double dt_max = dt_max_i * delta_t;
@@ -256,105 +241,6 @@ int main(int argc, char** argv) {
     ArrayColumn<Float> col_sigma_out(ms_out, "SIGMA");
     cout << "\r" "+ Output table and columns ready for writing." << endl;
 
-#if 0
-    cout << string(80,'*') << endl;
-    struct timeval timer_test[2];
-    gettimeofday(&timer_test[0], 0);
-    int num_rows_test = 1305500;
-    int block_size = 100;
-    int num_blocks = num_rows_test / block_size;
-
-#if 1
-    Vector<Double> test_uu(block_size);
-    Vector<Double> test_vv(block_size);
-    Vector<Double> test_ww(block_size);
-    Vector<Int> test_ant1(block_size);
-    Vector<Int> test_ant2(block_size);
-    Vector<Double> test_time(block_size);
-    Vector<Double> test_interval(block_size);
-
-    Vector<Complex> test_data(block_size);
-    Vector<Float> test_weight(block_size);
-    Vector<Float> test_sigma(block_size);
-
-    Vector<Double> tuvw_(3);
-    Vector<Float> tsigma_(1, 0.0);
-    Vector<Float> tweight_(1, 1.0);
-    Array<Complex> tdata_(IPosition(2, 1, 1));
-
-    for (int b = 0; b < num_blocks; ++b) {
-        // Generate a block of values.
-        for (int i = 0, ii = b * block_size; i < block_size; ++i, ++ii) {
-            test_uu[i] = (double)ii;
-            test_vv[i] = (double)ii + 0.1;
-            test_ww[i] = (double)ii + 0.2;
-            test_ant1[i] = 1;
-            test_ant2[i] = 2;
-            test_time[i] = 1.2345;
-            test_interval[i] = 1.0;
-            test_weight[i] = (float)ii;
-            test_sigma[i] = (float)ii;
-            test_data[i] = Complex((float)ii, (float)-ii);
-        }
-        // Write the block
-        ms_out.addRow(block_size, false);
-        for (int i = 0, ii = b * block_size; i < block_size; ++i, ++ii) {
-            tuvw_[0] = test_uu[i];
-            tuvw_[1] = test_uu[i];
-            tuvw_[2] = test_uu[i];
-            col_uvw_out.put(ii, tuvw_);
-            col_ant1_out.put(ii, test_ant1[i]);
-            col_ant2_out.put(ii, test_ant1[i]);
-            col_time_out.put(ii, test_time[i]);
-            col_time_centroid_out.put(ii, test_time[i]);
-            col_interval_out.put(ii, test_interval[i]);
-            col_exposure_out.put(ii, test_interval[i]);
-            tweight_[0] = test_weight[i];
-            tsigma_[0] = test_sigma[i];
-            tdata_[0] = test_data[i];
-            col_weight_out.put(ii, tweight_);
-            col_sigma_out.put(ii, tsigma_);
-            col_data_out.put(ii, tdata_);
-        }
-    }
-
-#else
-    Vector<Float> tsigma_(1, 1.0);
-    Vector<Float> tweight_(1, 1.0);
-    Array<Complex> tdata_(IPosition(2, 1, 1));
-    Vector<Double> tuvw_(3);
-    for (int irow = 0, b = 0; b < num_blocks; ++b) {
-        ms_out.addRow(block_size, false);
-        for (int i = 0; i < block_size; ++i, ++irow) {
-            tuvw_[0] = (double)irow;
-            tuvw_[1] = (double)irow + 0.1;
-            tuvw_[2] = (double)irow + 0.2;
-            col_uvw_out.put(irow, tuvw_);
-            col_ant1_out.put(irow, 1);
-            col_ant2_out.put(irow, 2);
-            col_time_out.put(irow, 12345.0);
-            col_time_centroid_out.put(irow, 12345.0);
-            tdata_[0] = Complex(irow, 0.0);
-            col_data_out.put(irow, tdata_);
-            col_interval_out.put(irow, 1.5);
-            col_exposure_out.put(irow, 2.0);
-            tweight_[0] = irow + 0.3;
-            col_weight_out.put(irow, tweight_);
-            tsigma_[0] = 1.0 / (irow + 0.5);
-            col_sigma_out.put(irow, tsigma_);
-        }
-    }
-#endif
-    gettimeofday(&timer_test[1], 0);
-    assert((int)ms_out.nrow() == num_rows_test);
-    printf("*** Writing of %i rows took %.3fs\n", ms_out.nrow(),
-           timer_elapsed(timer_test[0], timer_test[1]));
-    cout << string(80,'*') << endl;
-
-    return 0;
-#endif
-
-
     // Buffers of deltas along the baseline in the current average.
     std::vector<double> duvw_(num_baselines, 0.0);
     std::vector<double> dt_(num_baselines, 0);
@@ -386,7 +272,6 @@ int main(int argc, char** argv) {
     for (uInt t = 0; t < num_times; ++t) {
         for (uInt b = 0, a1 = 0; a1 < num_antennas; ++a1) {
             for (uInt a2 = a1+1; a2 < num_antennas; ++a2, ++b) {
-
                 uInt row = t * num_baselines + b;
 
                 // Get coordinates and time for the current baseline.
@@ -419,14 +304,15 @@ int main(int argc, char** argv) {
                     double b_duu = b_uu1 - b_uu;
                     double b_dvv = b_vv1 - b_vv;
                     double b_dww = b_ww1 - b_ww;
-                    b_duvw = sqrt(b_duu * b_duu + b_dvv * b_dvv + b_dww * b_dww);
+                    b_duvw = sqrt(b_duu * b_duu + b_dvv * b_dvv +
+                        b_dww * b_dww);
                     b_dt = (b_t1 - b_t);
                 }
 
                 // If last time or if next point extends beyond average save out
                 // average baseline and reset average, else accumulate current
                 // average length.
-                if (t == num_times - 1 || duvw[b]+b_duvw >= duvw_max
+                if (t == num_times - 1 || duvw[b] + b_duvw >= duvw_max
                                 || dt[b] + b_dt >= dt_max) {
                     ms_out.addRow(1, false);
 
@@ -440,8 +326,8 @@ int main(int argc, char** argv) {
                     bda_uvw[2] = ave_ww[b] / bda_count;
                     col_uvw_out.put(bda_row, bda_uvw);
                     // Populate antenna columns.
-                    col_ant1_out.put(bda_row, (int)a1);
-                    col_ant2_out.put(bda_row, (int)a2);
+                    col_ant1_out.put(bda_row, static_cast<int>(a1));
+                    col_ant2_out.put(bda_row, static_cast<int>(a2));
                     // Populate flag column.
                     col_flag_out.put(bda_row, flag);
                     // Populate time columns.
@@ -450,14 +336,18 @@ int main(int argc, char** argv) {
                     col_interval_out.put(bda_row, bda_count * delta_t);
                     col_exposure_out.put(bda_row, bda_count * delta_t);
                     // Populate weight and sigma columns
-                    float bda_sigma = 1.0 / sqrt((float)bda_count);
-                    float bda_weight = (float)bda_count;
-                    col_sigma_out.put(bda_row, Vector<Float>(num_pols, bda_sigma));
-                    col_weight_out.put(bda_row, Vector<Float>(num_pols, bda_weight));
+                    float bda_sigma = 1.0 / sqrt(static_cast<float>(bda_count));
+                    float bda_weight = static_cast<float>(bda_count);
+                    col_sigma_out.put(bda_row, Vector<Float>(num_pols,
+                        bda_sigma));
+                    col_weight_out.put(bda_row, Vector<Float>(num_pols,
+                        bda_weight));
                     // Populate data column(s).
                     for (int p = 0; p < num_pols; ++p) {
-                        double bda_re = ave_data[b * num_pols + p].real() / bda_count;
-                        double bda_im = ave_data[b * num_pols + p].imag() / bda_count;
+                        double bda_re = ave_data[b * num_pols + p].real() /
+                            bda_count;
+                        double bda_im = ave_data[b * num_pols + p].imag() /
+                            bda_count;
                         bda_data_p[p] = Complex(bda_re, bda_im);
                     }
                     col_data_out.put(bda_row, bda_data);
@@ -485,14 +375,19 @@ int main(int argc, char** argv) {
         }
     }
     gettimeofday(&timer_loop[1], 0);
-    cout << "+ Loop timer elapsed   : " << timer_elapsed(timer_loop[0], timer_loop[1]) << " s" << endl;
+    cout << "+ Loop timer elapsed   : " <<
+        timer_elapsed(timer_loop[0], timer_loop[1]) << " s" << endl;
 
     gettimeofday(&timer_all[1], NULL);
-    cout << "+ Total time elapsed   : " << timer_elapsed(timer_all[0], timer_all[1]) << " s" << endl;
+    cout << "+ Total time elapsed   : " <<
+        timer_elapsed(timer_all[0], timer_all[1]) << " s" << endl;
 
     cout << "+ Number of BDA rows   : " << ms_out.nrow() << endl;
-    cout << "+ Data reduction       : " << ms.nrow()/(double)ms_out.nrow() << ":1" << endl;
+    cout << "+ Data reduction       : " <<
+        ms.nrow() / static_cast<double>(ms_out.nrow()) << ":1" << endl;
 
+    cout << endl;
+    cout << "BDA MS                 : " << filename_out << endl;
 
     return 0;
 }

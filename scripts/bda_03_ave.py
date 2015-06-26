@@ -5,6 +5,7 @@ import numpy as np
 import os
 import shutil
 import time
+import sys
 
 
 def inv_sinc(arg):
@@ -16,7 +17,7 @@ def inv_sinc(arg):
         a = x0 * np.pi
         x1 = x0 - ((np.sin(a) / a) - arg) / \
             ((a * np.cos(a) - np.pi * np.sin(a)) / (a**2))
-        if (np.fabs(x1 - x0) < 1.0e-6):
+        if np.fabs(x1 - x0) < 1.0e-6:
             break
     return x1
 
@@ -33,13 +34,13 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
     wavelength = 299792458.0 / freq
     delta_uv = inv_sinc(1.0 / max_fact) / (fov_radius * (np.pi / 180.))
     delta_uv *= wavelength  # convert to metres
-    print ''
-    print 'freq %.3e' % freq
-    print 'fov  %.3f' % fov_radius
-    print 'maxf %.3f' % max_fact
-    print 'd_uv %.3e' % delta_uv
-    print 'd_t  %s' % dt_max
-    print ''
+    print '*' * 80
+    print 'freq    %.3e' % freq
+    print 'fov     %.3f' % fov_radius
+    print 'maxf    %.3f' % max_fact
+    print 'd_uv    %.3e' % delta_uv
+    print 'd_t     %s' % dt_max
+    print '*' * 80
     if os.path.isdir(ms_out):
         shutil.rmtree(ms_out)
     mstransform(vis=ms_in,
@@ -58,16 +59,38 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
 
 if __name__ == "__main__":
     # -------------------------------------------------------------------------
-    dt = 1.6  # Correlator dump time. TODO(BM) get this from the MS.
-    dt_max = '%.2fs' % (5.0 * dt)  # Maximum allowed averaging time.
+    dt = 0.08  # Correlator dump time. TODO(BM) get this from the MS.
+    idt_max = 100
+    dt_max = '%.2fs' % (idt_max * dt)  # Maximum allowed averaging time.
     max_fact = 1.01   # Maximum amplitude loss factor.
     fov_radius = 0.9  # Field of view radius (input into mstransform)
     # -------------------------------------------------------------------------
 
+    if len(sys.argv) - 1 < 1:
+        print 'Usage:'
+        print ('  $ casa --nologger --nogui -c scripts/bda_02_cor.py '
+               '<simulation dir>')
+        sys.exit(1)
+
+    sim_dir = sys.argv[-1]
+    if not os.path.isdir(sim_dir):
+        print 'ERROR: simulation directory not found!'
+        sys.exit(1)
+
+    print '-' * 60
+    print '+ Simulation directory:', sim_dir
+    print '+ dt                  :', dt
+    print '+ idt_max             :', idt_max
+    print '+ dt_max              :', dt_max
+    print '+ max_fact            :', max_fact
+    print '+ fov_radius          :', fov_radius
+    print '-' * 60
+
     # Average the model data.
+    t_all = time.time()
     t0 = time.time()
-    ms_in = os.path.join('vis', 'model.ms')
-    ms_out = os.path.join('vis', 'model_mstransform.ms')
+    ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
+    ms_out = os.path.join(sim_dir, 'vis', 'model_mstransform.ms')
     if os.path.isdir(ms_in):
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \
@@ -75,9 +98,14 @@ if __name__ == "__main__":
 
     # Average the corrupted data.
     t0 = time.time()
-    ms_in = os.path.join('vis', 'corrupted.ms')
-    ms_out = os.path.join('vis', 'corrupted_ave.ms')
+    ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
+    ms_out = os.path.join(sim_dir, 'vis', 'corrupted_mstransform.ms')
     if os.path.isdir(ms_in):
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \
             (time.time() - t0, ms_out)
+
+    print ''
+    print '*' * 60
+    print '+Total time taken = %.3fs' % (time.time() - t_all)
+    print '*' * 60
