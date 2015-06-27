@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# -*- coding: utf-8 -*-# -*- coding: utf-8 -*-
 """BDA with CASA mstransform task."""
 
 import numpy as np
@@ -59,7 +59,7 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
 
 if __name__ == "__main__":
     # -------------------------------------------------------------------------
-    dt = 0.08  # Correlator dump time. TODO(BM) get this from the MS.
+    dt = 0.1  # Correlator dump time. TODO(BM) get this from the MS.
     idt_max = 100
     dt_max = '%.2fs' % (idt_max * dt)  # Maximum allowed averaging time.
     max_fact = 1.01   # Maximum amplitude loss factor.

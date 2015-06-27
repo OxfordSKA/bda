@@ -31,6 +31,7 @@ def get_num_antennas(ms):
 
 
 def create_empty_caltable(ms, cal_table, num_times):
+    """."""
     if os.path.isdir(cal_table):
         shutil.rmtree(cal_table)
     # gencal() generates a table with one row for each antenna.
@@ -47,7 +48,7 @@ def create_empty_caltable(ms, cal_table, num_times):
 def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
     """Fill a CASA calibration table."""
     # ----------------------------------
-    tau = np.ceil(1.0 / dt)*dt
+    tau = np.ceil(1.0 / dt) * dt
     amp_std_t0 = 0.005
     amp_H = 0.8
     amp_adev_fbm = 1.0e-4
@@ -91,13 +92,17 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
 
 
 def run_applycal(ms, cal_table):
-    # Performs Vis_cal = 1./G_p * V_pq * conj(1./G_q)
+    """Apply a gain table.
+
+    Performs Vis_cal = 1./G_p * V_pq * conj(1./G_q)
+    """
     applycal(vis=ms, field='', spw='', selectdata=False, gaintable=[cal_table],
              gainfield=[''], interp=['nearest'], calwt=[False],
              applymode='calonly', flagbackup=False)
 
 
 def scratch_columns_create(ms):
+    """."""
     tb.open(ms)
     colnames = tb.colnames()
     tb.close()
@@ -106,6 +111,7 @@ def scratch_columns_create(ms):
 
 
 def copy_column(ms, src_col, dst_col):
+    """."""
     tb.open(ms, nomodify=False)
     num_rows = tb.nrows()
     rows_read = 0
@@ -120,6 +126,7 @@ def copy_column(ms, src_col, dst_col):
 
 
 def main(sim_dir):
+    """."""
     tAll = time.time()
 
     # ---------------------------------------------------

@@ -31,7 +31,7 @@ def get_num_antennas(ms):
 
 
 def add_extra_data_columns(ms):
-    """Adds MODEL_DATA and CORRECTED_DATA columns to a Measurement Set."""
+    """Add MODEL_DATA and CORRECTED_DATA columns to a Measurement Set."""
     tb.open(ms, nomodify=False)
     # -------------------------------- Add the MODEL_DATA column and fill
     #                                  with values from the 'DATA' column.
@@ -75,7 +75,8 @@ def add_extra_data_columns(ms):
     # -------------------------------- Add the CORRECTED_DATA column
     #                                  and fill with zeros.
     cor_desc = {
-        'CORRECTED_DATA': {
+        'CORRECTED_DATA':
+        {
             'comment': 'corrected data',
             'dataManagerGroup': 'CorrectedTiled',
             'dataManagerType': 'TiledShapeStMan',
@@ -83,8 +84,7 @@ def add_extra_data_columns(ms):
             'ndim': 2,
             'option': 0,
             'valueType': 'complex'
-            }
-        }
+        }}
     cor_dminfo = {
         '*7': {
             'COLUMNS': array(['CORRECTED_DATA'], dtype='|S15'),
@@ -116,6 +116,7 @@ def add_extra_data_columns(ms):
 
 # TODO(BM) Split generation and apply of gains.
 def corrupt_data(ms):
+    """."""
     num_antennas = get_num_antennas(ms)
     num_times, time_range, length, dt = get_time_info(ms)
 
@@ -144,8 +145,8 @@ def corrupt_data(ms):
     inv_conj_gain = np.zeros((num_antennas, num_times), dtype='c16')
 
     # set value for ref. antenna
-    inv_gain[0, :] = np.ones((num_times,),dtype='c16')
-    inv_conj_gain[0, :] = np.ones((num_times,),dtype='c16')
+    inv_gain[0, :] = np.ones((num_times,), dtype='c16')
+    inv_conj_gain[0, :] = np.ones((num_times,), dtype='c16')
 
     # set gains for rest of antennas.
     for a in range(1, num_antennas):
@@ -171,10 +172,12 @@ def corrupt_data(ms):
 
     tb.open(ms, nomodify=False)
     tb.putcol('DATA', np.reshape(Vpq, (1, 1, num_vis)))
+    tb.putcol('CORRECTED_DATA', np.reshape(Vpq, (1, 1, num_vis)))
     tb.close()
 
 
 def main(sim_dir):
+    """."""
     tAll = time.time()
 
     # ---------------------------------------------------
@@ -201,7 +204,7 @@ def main(sim_dir):
     corrupt_data(ms)
     print '+ Apply of corruptions: %.3f s' % (time.time() - t0)
 
-    print '+ Total time: %.3f s' % (time.time()-tAll)
+    print '+ Total time: %.3f s' % (time.time() - tAll)
 
 if __name__ == "__main__":
     if len(sys.argv) - 1 < 1:
