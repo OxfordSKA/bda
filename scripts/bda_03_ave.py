@@ -8,9 +8,20 @@ import time
 import sys
 
 
+def get_time_info(ms):
+    """."""
+    tb.open(ms, nomodify=True)
+    times = np.unique(tb.getcol('TIME_CENTROID'))
+    tb.close()
+    time_range = [np.min(times), np.max(times)]
+    num_times = len(times)
+    length = time_range[1] - time_range[0]
+    dt = length / (num_times - 1)
+    return num_times, time_range, length, dt
+
+
 def inv_sinc(arg):
     """Newton-Raphson method for calculating arcsinc(x), from Obit."""
-    import numpy as np
     x1 = 0.001
     for i in range(0, 1000):
         x0 = x1
@@ -59,9 +70,7 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
 
 if __name__ == "__main__":
     # -------------------------------------------------------------------------
-    dt = 0.1  # Correlator dump time. TODO(BM) get this from the MS.
     idt_max = 100
-    dt_max = '%.2fs' % (idt_max * dt)  # Maximum allowed averaging time.
     max_fact = 1.01   # Maximum amplitude loss factor.
     fov_radius = 0.9  # Field of view radius (input into mstransform)
     # -------------------------------------------------------------------------
@@ -79,9 +88,7 @@ if __name__ == "__main__":
 
     print '-' * 60
     print '+ Simulation directory:', sim_dir
-    print '+ dt                  :', dt
     print '+ idt_max             :', idt_max
-    print '+ dt_max              :', dt_max
     print '+ max_fact            :', max_fact
     print '+ fov_radius          :', fov_radius
     print '-' * 60
@@ -91,6 +98,12 @@ if __name__ == "__main__":
     t0 = time.time()
     ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
     ms_out = os.path.join(sim_dir, 'vis', 'model_mstransform.ms')
+    _, _, _, dt = get_time_info(ms_in)
+    dt_max = '%.2fs' % (idt_max * dt)
+    print '-' * 60
+    print '+ dt                  :', dt
+    print '+ dt_max              :', dt_max
+    print '-' * 60
     if os.path.isdir(ms_in):
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \
@@ -100,6 +113,12 @@ if __name__ == "__main__":
     t0 = time.time()
     ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
     ms_out = os.path.join(sim_dir, 'vis', 'corrupted_mstransform.ms')
+    _, _, _, dt = get_time_info(ms_in)
+    dt_max = '%.2fs' % (idt_max * dt)
+    print '-' * 60
+    print '+ dt                  :', dt
+    print '+ dt_max              :', dt_max
+    print '-' * 60
     if os.path.isdir(ms_in):
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \

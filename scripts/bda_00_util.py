@@ -24,14 +24,13 @@ def adev(data, dt, tau):
     f = np.reshape(freq, (m, -1), order='F')
     fa = np.mean(f, 0)
     fd = np.diff(fa)
-    M = len(fa)
-    M = M - 1
-    sm = np.sqrt(0.5 / (M) * (np.sum(fd**2)))
-    sme = sm / np.sqrt(M)
-    return sm, sme, M
+    n = len(fa) - 1
+    sm = np.sqrt(0.5 / n * (np.sum(fd**2)))
+    sme = sm / np.sqrt(n)
+    return sm, sme, n
 
 
-def fbm(n, H):
+def fbm(n, hurst):
     """Generate Fractional brownian motion noise.
 
     http://www.maths.uq.edu.au/~kroese/ps/MCSpatial.pdf
@@ -41,7 +40,7 @@ def fbm(n, H):
         H (float): Hurst parameter.
 
     Kwargs:
-        seed (int): Random geerator number seed.
+        seed (int): Random generator number seed.
 
     Returns:
         Time series array.
@@ -49,13 +48,13 @@ def fbm(n, H):
     r = np.empty((n + 1,)) * np.NaN
     r[0] = 1
     for k in range(1, n + 1):
-        a = 2.0 * H
+        a = 2.0 * hurst
         r[k] = 0.5 * ((k + 1)**a - 2 * k**a + (k - 1)**a)
     r = np.append(r, r[-2:0:-1])  # first row of circulant matrix
     lambda_ = np.real(np.fft.fft(r)) / (2 * n)  # Eigenvalues
-    W = np.fft.fft(np.sqrt(lambda_) * (np.random.randn(2 * n,) +
-                                       1j * np.random.randn(2 * n,)))
-    W = n**(-H) * np.cumsum(np.real(W[0:n + 1]))  # Rescale
+    W = np.fft.fft(np.sqrt(lambda_) * (np.random.randn(2 * n) +
+                                       1j * np.random.randn(2 * n)))
+    W = n**(-hurst) * np.cumsum(np.real(W[0:n + 1]))  # Rescale
     return W
 
 

@@ -19,11 +19,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # -------------------------------------------------------------------------
-    # dt = 0.1  # Correlator dump time. TODO(BM) get this from the MS.
-    dt = 0.08  # Correlator dump time. TODO(BM) get this from the MS.
     idt_max = 100
     max_fact = 1.01   # Maximum amplitude loss factor.
-    fov_radius = 0.9  # Field of view radius (input into mstransform)
+    fov_radius = 0.9  # Field of view radius for max_fact
     # -------------------------------------------------------------------------
 
     cmd = 'src/bda'
