@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
     printf("  No. baselines : %i\n", num_baselines);
     printf("  No. times     : %i\n", num_times);
     printf("  No. pols      : %i\n", num_pols);
-    printf("  freq.         : %.16f\n", freq);
+    printf("  Freq. [MHz]   : %.16f\n", freq/1.e6);
     printf("  delta_t       : %.16f\n", delta_t);
     printf("Averaging:\n");
     printf("  MS out        : %s\n", filename_out.c_str());
@@ -302,7 +302,7 @@ int main(int argc, char** argv) {
                 ave_uu[b] += b_uu;
                 ave_vv[b] += b_vv;
                 ave_ww[b] += b_ww;
-                ave_t[b] += b_t;
+                ave_t[b]  += b_t;
                 for (int p = 0; p < num_pols; ++p) {
                     ave_data[b * num_pols + p] += data[row * num_pols + p];
                     ave_model_data[b * num_pols + p] += model_data[row * num_pols + p];
@@ -383,6 +383,7 @@ int main(int argc, char** argv) {
 
                     // Reset baseline accumulation buffers.
                     duvw[b] = 0.0;
+                    ave_t[b] = 0.0;
                     dt[b] = 0.0;
                     ave_count[b] = 0;
                     ave_uu[b] = 0.0;

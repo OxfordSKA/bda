@@ -359,6 +359,7 @@ int main(int argc, char** argv) {
                     ave_uu[b] = 0.0;
                     ave_vv[b] = 0.0;
                     ave_ww[b] = 0.0;
+                    ave_t[b] = 0.0;
                     for (int p = 0; p < num_pols; ++p) {
                         ave_data[b*num_pols + p].real() = 0.0;
                         ave_data[b*num_pols + p].imag() = 0.0;
