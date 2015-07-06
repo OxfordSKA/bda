@@ -48,17 +48,22 @@ def create_empty_caltable(ms, cal_table, num_times):
 def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
     """Fill a CASA calibration table."""
     # ----------------------------------
-    tau = np.ceil(1.0 / dt) * dt
+    tau = round(1.0 / dt) * dt
     amp_std_t0 = 0.005
     amp_H = 0.8
     amp_adev_fbm = 1.0e-4
     amp_sigma_wn = 0.0
-    phase_std_t0 = 30.0
-    phase_H = 0.8
-    phase_adev_fbm = 1.0
+    phase_std_t0 = 45.0
+    phase_H = 0.75
+    phase_adev_fbm = 2.0
     phase_sigma_wn = 0.0
-    np.random.seed(101)
+    np.random.seed(666)
     # ----------------------------------
+    print '-' * 60
+    print 'dt  = %f' % dt
+    print 'tau = %f' % tau
+    print '-' * 60
+
     out_dir = os.path.dirname(cal_table)
     all_gains = {}
     all_gains[0] = np.ones((num_times,), dtype='c16')

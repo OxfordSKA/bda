@@ -25,21 +25,19 @@ def run_applycal(ms, cal_table):
 
 def main(sim_dir):
     """."""
-    non_bda = True
-    bda = True
 
-    if non_bda:
-        # -------------------------------------------------------------------------
-        ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
-        ms = os.path.join(sim_dir, 'vis', 'calibrated.ms')
-        cal_table = os.path.splitext(ms)[0] + '.gains'
-        # -------------------------------------------------------------------------
-
-        if os.path.isdir(ms):
-            print 'Removing existing MS : %s' % ms
-            shutil.rmtree(ms)
-        os.system('cp -r %s %s' % (ms_in, ms))
+    # -------------------------------------------------------------------------
+    ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
+    ms = os.path.join(sim_dir, 'vis', 'calibrated.ms')
+    cal_table = os.path.splitext(ms)[0] + '.gains'
+    # -------------------------------------------------------------------------
+    if os.path.isdir(ms_in) and not os.path.isdir(ms):
+        print 'Calibrating %s' % ms
+        # if os.path.isdir(ms):
+        #     print 'Removing existing MS : %s' % ms
+        #     shutil.rmtree(ms)
         # copytree(ms_in, ms)
+        os.system('cp -r %s %s' % (ms_in, ms))
 
         t0 = time.time()
         run_gaincal(ms, cal_table)
@@ -55,21 +53,16 @@ def main(sim_dir):
         print '*' * 80
         print '\n' * 3
 
-    if bda:
-        # -------------------------------------------------------------------------
-        ms_in = os.path.join(sim_dir, 'vis', 'corrupted_mstransform.ms')
-        ms = os.path.join(sim_dir, 'vis', 'calibrated_mstransform.ms')
-        if not os.path.isdir(ms_in):
-            ms_in = os.path.join(sim_dir, 'vis', 'corrupted_bda.ms')
-        if not os.path.isdir(ms):
-            ms = os.path.join(sim_dir, 'vis', 'calibrated_bda.ms')
-        cal_table = os.path.splitext(ms)[0] + '.gains'
-        # -------------------------------------------------------------------------
-
-        if os.path.isdir(ms):
-            print 'Removing existing MS : %s' % ms
-            shutil.rmtree(ms)
-
+    # -------------------------------------------------------------------------
+    ms_in = os.path.join(sim_dir, 'vis', 'corrupted_bda.ms')
+    ms = os.path.join(sim_dir, 'vis', 'calibrated_bda.ms')
+    cal_table = os.path.splitext(ms)[0] + '.gains'
+    # -------------------------------------------------------------------------
+    if os.path.isdir(ms_in) and not os.path.isdir(ms):
+        print 'Calibrating %s' % ms
+        # if os.path.isdir(ms):
+        #     print 'Removing existing MS : %s' % ms
+        #     shutil.rmtree(ms)
         # copytree(ms_in, ms)
         os.system('cp -r %s %s' % (ms_in, ms))
 

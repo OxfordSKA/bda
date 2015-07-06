@@ -121,17 +121,21 @@ def corrupt_data(ms):
     num_times, time_range, length, dt = get_time_info(ms)
 
     # ----------------------------------
-    tau = np.ceil(1.0 / dt) * dt
+    tau = round(1.0 / dt) * dt
     amp_std_t0 = 0.005
     amp_H = 0.8
     amp_adev_fbm = 1.0e-4
     amp_sigma_wn = 0.0
-    phase_std_t0 = 30.0
-    phase_H = 0.8
-    phase_adev_fbm = 1.0
+    phase_std_t0 = 45.0
+    phase_H = 0.75
+    phase_adev_fbm = 2.0
     phase_sigma_wn = 0.0
-    np.random.seed(101)
+    np.random.seed(666)
     # ----------------------------------
+    print '-' * 60
+    print 'dt  = %f' % dt
+    print 'tau = %f' % tau
+    print '-' * 60
 
     tb.open(ms, nomodify=True)
     Vpq = tb.getcol('DATA')

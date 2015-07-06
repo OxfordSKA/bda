@@ -19,21 +19,27 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # -------------------------------------------------------------------------
-    idt_max = 100
-    max_fact = 1.01   # Maximum amplitude loss factor.
+    idt_max = 50
+    max_fact = 1.002   # Maximum amplitude loss factor.
     fov_radius = 0.9  # Field of view radius for max_fact
     # -------------------------------------------------------------------------
 
     cmd = 'src/bda'
     ms = os.path.join(sim_dir, 'vis', 'model.ms')
     subprocess.call([cmd, ms,
-                     '%.2f' % max_fact,
-                     '%.1f' % fov_radius,
+                     '%.5f' % max_fact,
+                     '%.3f' % fov_radius,
                      '%i' % idt_max])
+
+    print ''
+    print '*' * 60
+    print '*' * 60
+    print '*' * 60
+    print ''
 
     cmd = 'src/bda_2'
     ms = os.path.join(sim_dir, 'vis', 'corrupted.ms')
     subprocess.call([cmd, ms,
-                     '%.2f' % max_fact,
-                     '%.1f' % fov_radius,
+                     '%.5f' % max_fact,
+                     '%.3f' % fov_radius,
                      '%i' % idt_max])

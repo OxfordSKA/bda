@@ -57,7 +57,7 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
     # dt = 0.08  # seconds
     # num_times = 200
     dt = 0.1  # seconds
-    num_times = 1000
+    num_times = 600
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg

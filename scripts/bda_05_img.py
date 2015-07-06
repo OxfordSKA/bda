@@ -86,16 +86,21 @@ def main(sim_dir):
     all_ms = [p_ for p_ in os.listdir(ms_dir) if p_.endswith('.ms')]
     img_size = [512, 512]
     img_fov = [0.01, 0.01]  # deg
-    # img_fov = [0.005, 0.005]  # deg (0.005 deg == 18 arcsec)
-    # img_fov = [0.008, 0.008]
     # TODO(BM) load ra, dec from sky model
     ra0 = -90.35458487600000
     dec0 = -7.67112399060000
-    w_planes = None
+    w_planes = None  # Don't need w-planes for a source at the image centre
     # ---------------------------------------
 
     for ms in all_ms:
+        # if 'corrupted' not in ms:
+        #     continue
         root_name = os.path.join(sim_dir, 'images', os.path.splitext(ms)[0])
+        if os.path.exists(root_name + '_dirty.fits'):
+            print 'INFO: image (%s) already exists, skipping.' %\
+                  (root_name + '_dirty.fits')
+            continue
+
         ms = os.path.join(sim_dir, 'vis', ms)
         if 'calibrated' in ms:
             data_column = 'CORRECTED_DATA'

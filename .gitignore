@@ -5,6 +5,7 @@ ini
 .project
 .idea
 src/bda
+src/bda_2
 scripts/*.pyc
 scripts/util/*.pyc
 *.png

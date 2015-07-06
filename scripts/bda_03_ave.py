@@ -70,8 +70,8 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
 
 if __name__ == "__main__":
     # -------------------------------------------------------------------------
-    idt_max = 100
-    max_fact = 1.01   # Maximum amplitude loss factor.
+    idt_max = 50
+    max_fact = 1.002   # Maximum amplitude loss factor.
     fov_radius = 0.9  # Field of view radius (input into mstransform)
     # -------------------------------------------------------------------------
 
@@ -97,9 +97,9 @@ if __name__ == "__main__":
     t_all = time.time()
     t0 = time.time()
     ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
-    ms_out = os.path.join(sim_dir, 'vis', 'model_mstransform.ms')
+    ms_out = os.path.join(sim_dir, 'vis', 'model_bda.ms')
     _, _, _, dt = get_time_info(ms_in)
-    dt_max = '%.2fs' % (idt_max * dt)
+    dt_max = '%.5fs' % (idt_max * dt)
     print '-' * 60
     print '+ dt                  :', dt
     print '+ dt_max              :', dt_max
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # Average the corrupted data.
     t0 = time.time()
     ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
-    ms_out = os.path.join(sim_dir, 'vis', 'corrupted_mstransform.ms')
+    ms_out = os.path.join(sim_dir, 'vis', 'corrupted_bda.ms')
     _, _, _, dt = get_time_info(ms_in)
     dt_max = '%.2fs' % (idt_max * dt)
     print '-' * 60
