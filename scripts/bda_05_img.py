@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) - 1 < 1:
         print 'Usage:'
-        print ('  $ casa --nologger --nogui -c scripts/bda_04_cal.py '
+        print ('  $ casa --nologger --nogui -c scripts/bda_05_img.py '
                '<simulation dir>')
         sys.exit(1)
 

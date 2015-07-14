@@ -6,6 +6,7 @@ import sys
 import collections
 import time
 import subprocess
+import numpy as np
 
 
 def create_sky_model(sky_file, ra, dec, stokes_i_flux):
@@ -24,7 +25,7 @@ def create_sky_model(sky_file, ra, dec, stokes_i_flux):
         os.makedirs(os.path.dirname(sky_file))
     fh = open(sky_file, 'w')
     for ra_, dec_, I_ in zip(ra, dec, stokes_i_flux):
-        fh.write('%.14f, %.14f, %.3f' % (ra_, dec_, I_))
+        fh.write('%.14f, %.14f, %.3f\n' % (ra_, dec_, I_))
     fh.close()
 
 
@@ -66,7 +67,7 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
     # --------------------------------------------------------------
     s = collections.OrderedDict()
     s['simulator/'] = {
-        'max_sources_per_chunk': 1,
+        #'max_sources_per_chunk': 1,
         'double_precision': 'true',
         'keep_log_file': 'false'
     }
@@ -98,6 +99,25 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
     return s
 
 
+def source_ring(ra0_deg, dec0_deg, radius_deg=0.9):
+    """."""
+    import numpy as np
+    # Positions of sources around the circle.
+    #pos = np.array([90, 90.005, 0, 170, 270, 280], dtype='f8') * np.pi/180.0
+    pos = (np.array([0, 70, 135, 135.127, 200, 270], dtype='f8') - 45) * np.pi/180.0
+    radius_lm = np.sin(radius_deg * np.pi/180.0)
+    l = radius_lm * np.cos(pos)
+    m = radius_lm * np.sin(pos)
+
+    # Project onto sphere at given position.
+    ra0 = ra0_deg * np.pi / 180.0
+    dec0 = dec0_deg * np.pi / 180.0
+    c = np.arcsin(np.sqrt(l**2 + m**2))
+    dec = np.arcsin(np.cos(c)*np.sin(dec0) + m*np.cos(dec0))
+    ra = np.arctan2(l, np.cos(dec0)*np.cos(c) - m*np.cos(dec0))
+    return ra0_deg + ra * 180.0/np.pi, dec * 180.0/np.pi
+
+
 def oskar_sim(sim_dir):
     """Run the OSKAR simulation."""
     # ---------------------------------------------
@@ -108,7 +128,9 @@ def oskar_sim(sim_dir):
     ra0 = -90.3545848760  # deg
     dec0 = -8.5711239906  # deg
     # ---------------------------------------------
-    create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
+    ra, dec = source_ring(ra0, dec0)
+    #create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
+    create_sky_model(sky, ra, dec, np.ones(ra.shape))
     create_settings(ini, sky, telescope, ms, ra0, dec0)
     run_interferometer(ini)
     return ms
