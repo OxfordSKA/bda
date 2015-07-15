@@ -16,18 +16,21 @@ def main():
     # ----------------------------------
     num_antennas = 254
     num_times = 800
-    dt = 0.02  # seconds
+    dt = 0.1  # seconds
     tau = round(1.0 / dt) * dt  # ~1.0 seconds.
+
     amp_std_t0 = 0.005  # Initial (t=0) gain amplitude variation per antenna
     amp_hurst = 0.8
-    amp_allan_dev_fbm = 1.0e-4 / 4.0  # Allan deviation of gain amp @ tau
+    amp_allan_dev_fbm = 1.0e-3  # Allan deviation of gain amp @ tau
     amp_sigma_wn = 0.0
+
     phase_std_t0 = 45.0  # Initial (t=0) gain phase variation per antenna
     phase_hurst = 0.75
-    phase_allan_dev_fbm = 2.0 / 4.0  # Allan deviation of gain phase @ tau
+    phase_allan_dev_fbm = 2.0  # Allan deviation of gain phase @ tau
     phase_sigma_wn = 0.0
+
     # np.random.seed(666)
-    gains_file = 'fbm_gains.mat'
+    gains_file = 'fbm_gains_16_02.mat'
     # ----------------------------------
     print 'Tau = %.2f' % tau
 
@@ -39,7 +42,7 @@ def main():
         gains[:, i] = g
 
     gain_table = OrderedDict()
-    gain_table['fbm_gains'] = {
+    gain_table['fbm_gains_16_02'] = {
         'gains': gains,
         'dt': dt,
         'num_times': num_times,
