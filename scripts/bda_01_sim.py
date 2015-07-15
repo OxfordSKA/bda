@@ -67,7 +67,7 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
     # --------------------------------------------------------------
     s = collections.OrderedDict()
     s['simulator/'] = {
-        #'max_sources_per_chunk': 1,
+        # 'max_sources_per_chunk': 1,
         'double_precision': 'true',
         'keep_log_file': 'false'
     }
@@ -100,22 +100,20 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
 
 
 def source_ring(ra0_deg, dec0_deg, radius_deg=0.9):
-    """."""
-    import numpy as np
+    """Generate a ring of sources around the phase centre."""
     # Positions of sources around the circle.
-    #pos = np.array([90, 90.005, 0, 170, 270, 280], dtype='f8') * np.pi/180.0
-    pos = (np.array([0, 70, 135, 135.127, 200, 270], dtype='f8') - 45) * np.pi/180.0
-    radius_lm = np.sin(radius_deg * np.pi/180.0)
+    pos = np.array([0, 70, 135, 135.127, 200, 270], dtype='f8') - 45
+    pos *= np.pi / 180.0
+    radius_lm = np.sin(radius_deg * np.pi / 180.0)
     l = radius_lm * np.cos(pos)
     m = radius_lm * np.sin(pos)
 
     # Project onto sphere at given position.
-    ra0 = ra0_deg * np.pi / 180.0
     dec0 = dec0_deg * np.pi / 180.0
     c = np.arcsin(np.sqrt(l**2 + m**2))
-    dec = np.arcsin(np.cos(c)*np.sin(dec0) + m*np.cos(dec0))
-    ra = np.arctan2(l, np.cos(dec0)*np.cos(c) - m*np.cos(dec0))
-    return ra0_deg + ra * 180.0/np.pi, dec * 180.0/np.pi
+    dec = np.arcsin(np.cos(c) * np.sin(dec0) + m * np.cos(dec0))
+    ra = np.arctan2(l, np.cos(dec0) * np.cos(c) - m * np.cos(dec0))
+    return ra0_deg + ra * 180.0 / np.pi, dec * 180.0 / np.pi
 
 
 def oskar_sim(sim_dir):
@@ -129,7 +127,7 @@ def oskar_sim(sim_dir):
     dec0 = -8.5711239906  # deg
     # ---------------------------------------------
     ra, dec = source_ring(ra0, dec0)
-    #create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
+    # create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
     create_sky_model(sky, ra, dec, np.ones(ra.shape))
     create_settings(ini, sky, telescope, ms, ra0, dec0)
     run_interferometer(ini)

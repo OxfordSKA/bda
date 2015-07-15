@@ -12,3 +12,4 @@ scripts/util/*.pyc
 *.log
 *.last
 *.mat
+venv
