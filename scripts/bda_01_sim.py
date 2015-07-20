@@ -57,8 +57,8 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
     # --------------------------------------------------------------
     # dt = 0.08  # seconds
     # num_times = 200
-    dt = 0.1  # seconds
-    num_times = 600
+    dt = 0.02  # seconds
+    num_times = 2000
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg
@@ -122,7 +122,7 @@ def oskar_sim(sim_dir):
     ini = os.path.join(sim_dir, 'ini', 'test.ini')
     ms = os.path.join(sim_dir, 'vis', 'model.ms')
     sky = os.path.join(sim_dir, 'models', 'sky.osm')
-    telescope = os.path.join('models', 'SKA1_mid_combined.tm')
+    telescope = os.path.join('models', 'ska1_meerkat_mid_combined_july_2015.tm')
     ra0 = -90.3545848760  # deg
     dec0 = -8.5711239906  # deg
     # ---------------------------------------------
