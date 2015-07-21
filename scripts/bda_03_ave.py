@@ -98,13 +98,13 @@ if __name__ == "__main__":
     t0 = time.time()
     ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
     ms_out = os.path.join(sim_dir, 'vis', 'model_bda.ms')
-    _, _, _, dt = get_time_info(ms_in)
-    dt_max = '%.5fs' % (idt_max * dt)
-    print '-' * 60
-    print '+ dt                  :', dt
-    print '+ dt_max              :', dt_max
-    print '-' * 60
     if os.path.isdir(ms_in):
+        _, _, _, dt = get_time_info(ms_in)
+        dt_max = '%.5fs' % (idt_max * dt)
+        print '-' * 60
+        print '+ dt                  :', dt
+        print '+ dt_max              :', dt_max
+        print '-' * 60
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \
             (time.time() - t0, ms_out)
@@ -113,13 +113,13 @@ if __name__ == "__main__":
     t0 = time.time()
     ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
     ms_out = os.path.join(sim_dir, 'vis', 'corrupted_bda.ms')
-    _, _, _, dt = get_time_info(ms_in)
-    dt_max = '%.2fs' % (idt_max * dt)
-    print '-' * 60
-    print '+ dt                  :', dt
-    print '+ dt_max              :', dt_max
-    print '-' * 60
     if os.path.isdir(ms_in):
+        _, _, _, dt = get_time_info(ms_in)
+        dt_max = '%.2fs' % (idt_max * dt)
+        print '-' * 60
+        print '+ dt                  :', dt
+        print '+ dt_max              :', dt_max
+        print '-' * 60
         run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
         print '+ Time taken in averaging = %.3fs [%s]' % \
             (time.time() - t0, ms_out)
