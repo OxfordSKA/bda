@@ -13,3 +13,6 @@ scripts/util/*.pyc
 *.last
 *.mat
 venv
+
+stef_*
+f2f
