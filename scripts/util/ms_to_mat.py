@@ -22,7 +22,9 @@ ms_dict = collections.OrderedDict()
 
 # Get data from main table.
 tb.open(ms_path)
+print 'Converting Main table...'
 for col_name in tb.colnames():
+    print '  ', col_name
     try:
         ms_dict[col_name] = tb.getcol(col_name)
     except RuntimeError:  # Thrown for empty columns
@@ -32,6 +34,7 @@ sub_tables = tb.getkeywords()
 tb.close()
 
 # Get data from sub-tables.
+print 'Converting sub-tables...'
 for sub_table in sorted(sub_tables):
     if str(sub_tables[sub_table]).startswith('Table'):
         tb.open(os.path.join(ms_path, sub_table))
@@ -44,6 +47,7 @@ for sub_table in sorted(sub_tables):
         tb.close()
 
 # Write data to MATLAB file.
+print 'Saving MAT file ... (this may take a while!)'
 scipy.io.savemat(ms_path + '.mat', ms_dict, do_compression=True)
 print '=' * 80
 print 'MS conversion complete.'
