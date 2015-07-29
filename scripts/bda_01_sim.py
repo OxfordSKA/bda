@@ -58,7 +58,7 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
     # dt = 0.08  # seconds
     # num_times = 200
     dt = 0.02  # seconds
-    num_times = 2000
+    num_times = 2500
     freq = 700.0e6  # Hz
     start_time = 57086.113194  # MJD UTC
     lon0 = 21.442909  # deg
@@ -102,7 +102,7 @@ def create_settings(ini_file, sky, telescope, ms, ra0, dec0):
 def source_ring(ra0_deg, dec0_deg, radius_deg=0.9):
     """Generate a ring of sources around the phase centre."""
     # Positions of sources around the circle.
-    pos = np.array([0, 70, 135, 135.127, 200, 270], dtype='f8') - 45
+    pos = np.array([0, 70, 135, 135.127, 200, 270, 135.-0.15], dtype='f8') - 45
     pos *= np.pi / 180.0
     radius_lm = np.sin(radius_deg * np.pi / 180.0)
     l = radius_lm * np.cos(pos)
@@ -122,13 +122,16 @@ def oskar_sim(sim_dir):
     ini = os.path.join(sim_dir, 'ini', 'test.ini')
     ms = os.path.join(sim_dir, 'vis', 'model.ms')
     sky = os.path.join(sim_dir, 'models', 'sky.osm')
-    telescope = os.path.join('models', 'ska1_meerkat_mid_combined_july_2015.tm')
+    telescope = os.path.join('models',
+                             'ska1_meerkat_mid_combined_july_2015.tm')
     ra0 = -90.3545848760  # deg
     dec0 = -8.5711239906  # deg
     # ---------------------------------------------
     ra, dec = source_ring(ra0, dec0)
+    stokes_i = np.ones(ra.shape)
+    stokes_i[-1] = 0.5
     # create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
-    create_sky_model(sky, ra, dec, np.ones(ra.shape))
+    create_sky_model(sky, ra, dec, stokes_i)
     create_settings(ini, sky, telescope, ms, ra0, dec0)
     run_interferometer(ini)
     return ms
