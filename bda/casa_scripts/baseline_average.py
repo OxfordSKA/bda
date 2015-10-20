@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-# -*- coding: utf-8 -*-
 """BDA with CASA mstransform task."""
 
-import numpy as np
+import numpy
 import os
+from os.path import join
 import shutil
 import time
 import sys
+import math
+import json
+from bda import utilities
 
 
 def get_time_info(ms):
     """."""
     tb.open(ms, nomodify=True)
-    times = np.unique(tb.getcol('TIME_CENTROID'))
+    times = numpy.unique(tb.getcol('TIME_CENTROID'))
     tb.close()
-    time_range = [np.min(times), np.max(times)]
+    time_range = [numpy.min(times), numpy.max(times)]
     num_times = len(times)
     length = time_range[1] - time_range[0]
     dt = length / (num_times - 1)
@@ -25,10 +29,10 @@ def inv_sinc(arg):
     x1 = 0.001
     for i in range(0, 1000):
         x0 = x1
-        a = x0 * np.pi
-        x1 = x0 - ((np.sin(a) / a) - arg) / \
-            ((a * np.cos(a) - np.pi * np.sin(a)) / (a**2))
-        if np.fabs(x1 - x0) < 1.0e-6:
+        a = x0 * math.pi
+        x1 = x0 - ((math.sin(a) / a) - arg) / \
+            ((a * math.cos(a) - math.pi * math.sin(a)) / (a**2))
+        if math.fabs(x1 - x0) < 1.0e-6:
             break
     return x1
 
@@ -43,7 +47,7 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
         return
     freq = freqs[0]
     wavelength = 299792458.0 / freq
-    delta_uv = inv_sinc(1.0 / max_fact) / (fov_radius * (np.pi / 180.))
+    delta_uv = inv_sinc(1.0 / max_fact) / (fov_radius * (math.pi / 180.))
     delta_uv *= wavelength  # convert to metres
     print '*' * 80
     print 'freq    %.3e' % freq
@@ -69,22 +73,15 @@ def run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max):
 
 
 if __name__ == "__main__":
-    # -------------------------------------------------------------------------
-    idt_max = 50
-    max_fact = 1.002   # Maximum amplitude loss factor.
-    fov_radius = 0.9  # Field of view radius (input into mstransform)
-    # -------------------------------------------------------------------------
 
-    if len(sys.argv) - 1 < 1:
-        print 'Usage:'
-        print ('  $ casa --nologger --nogui -c scripts/bda_02_cor.py '
-               '<simulation dir>')
-        sys.exit(1)
-
-    sim_dir = sys.argv[-1]
-    if not os.path.isdir(sim_dir):
-        print 'ERROR: simulation directory not found!'
-        sys.exit(1)
+    settings = utilities.byteify(json.load(open(config_file)))
+    # -------------------------------------------------------------------------
+    sim_dir = settings['path']
+    settings = settings['baseline_average']
+    idt_max = settings['idt_max']
+    max_fact = settings['max_fact']
+    fov_radius = settings['fov_radius_deg']
+    # -------------------------------------------------------------------------
 
     print '-' * 60
     print '+ Simulation directory:', sim_dir
@@ -93,36 +90,21 @@ if __name__ == "__main__":
     print '+ fov_radius          :', fov_radius
     print '-' * 60
 
-    # Average the model data.
     t_all = time.time()
-    t0 = time.time()
-    ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
-    ms_out = os.path.join(sim_dir, 'vis', 'model_bda.ms')
-    if os.path.isdir(ms_in):
-        _, _, _, dt = get_time_info(ms_in)
-        dt_max = '%.5fs' % (idt_max * dt)
-        print '-' * 60
-        print '+ dt                  :', dt
-        print '+ dt_max              :', dt_max
-        print '-' * 60
-        run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
-        print '+ Time taken in averaging = %.3fs [%s]' % \
-            (time.time() - t0, ms_out)
-
-    # Average the corrupted data.
-    t0 = time.time()
-    ms_in = os.path.join(sim_dir, 'vis', 'corrupted.ms')
-    ms_out = os.path.join(sim_dir, 'vis', 'corrupted_bda.ms')
-    if os.path.isdir(ms_in):
-        _, _, _, dt = get_time_info(ms_in)
-        dt_max = '%.2fs' % (idt_max * dt)
-        print '-' * 60
-        print '+ dt                  :', dt
-        print '+ dt_max              :', dt_max
-        print '-' * 60
-        run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
-        print '+ Time taken in averaging = %.3fs [%s]' % \
-            (time.time() - t0, ms_out)
+    for ms in zip(settings['input_ms'], settings['output_ms']):
+        t0 = time.time()
+        ms_in = join(sim_dir, ms[0])
+        ms_out = join(sim_dir, ms[1])
+        if os.path.isdir(ms_in):
+            _, _, _, dt = get_time_info(ms_in)
+            dt_max = '%.5fs' % (idt_max * dt)
+            print '-' * 60
+            print '+ dt                  :', dt
+            print '+ dt_max              :', dt_max
+            print '-' * 60
+            run_mstransform(ms_in, ms_out, max_fact, fov_radius, dt_max)
+            print '+ Time taken in averaging = %.3fs [%s]' % \
+                (time.time() - t0, ms_out)
 
     print ''
     print '*' * 60

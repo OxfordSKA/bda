@@ -1,0 +1,131 @@
+{
+  "path": "TEMP",
+  "only_plot": true,
+
+  "sim":
+  {
+    "output_ms": "model.ms",
+    "ini_file": "test.ini",
+    "sky_file": "sky.osm",
+    "telescope":
+    {
+      "path": "models/ska1_meerkat_mid_combined_july_2015.tm",
+      "lon_deg": 21.442909,
+      "lat_deg": -30.739475
+    },
+    "observation":
+    {
+      "ra_deg": -90.3545848760,
+      "dec_deg": -8.5711239906,
+      "freq_hz": 700.0e6,
+      "channel_bw_hz": 0.0,
+      "start_time_mjd": 57086.113194,
+      "dt_s": 0.02,
+      "num_times": 100
+    }
+  },
+
+  "corrupt":
+  {
+    "input_ms": "model.ms",
+    "output_ms": "corrupted.ms",
+    "gain_table": "corrupted.gains",
+    "tau_s": 1.0,
+    "seed": 666,
+    "plot_gains": true,
+    "amplitude":
+    {
+      "std_t0": 0.005,
+      "hurst": 0.8,
+      "allan_var": 1.0e-4
+    },
+    "phase":
+    {
+      "std_t0": 45.0,
+      "hurst": 0.75,
+      "allan_var": 2.0
+    }
+  },
+
+  "baseline_average":
+  {
+    "input_ms":
+    [
+      "model.ms",
+      "corrupted.ms"
+    ],
+    "output_ms":
+    [
+      "model_bda.ms",
+      "corrupted_bda.ms"
+    ],
+    "method": "mstransform",
+    "idt_max": 50,
+    "max_fact": 1.002,
+    "fov_radius_deg": 0.9
+  },
+
+  "calibration":
+  {
+    "method": "gaincal",
+    "plot_gains": true,
+    "input_ms":
+    [
+      "corrupted.ms",
+      "corrupted_bda.ms"
+    ],
+    "output_ms":
+    [
+      "calibrated.ms",
+      "calibrated_bda.ms"
+    ],
+    "gain_table":
+    [
+      "calibrated.gains",
+      "calibrated_bda.gains"
+    ]
+  },
+
+  "imaging":
+  {
+    "overwrite": true,
+    "data":
+    [
+      ["model.ms", "DATA"],
+      ["corrupted.ms", "DATA"],
+      ["calibrated.ms", "CORRECTED_DATA"],
+      ["model_bda.ms", "DATA"],
+      ["corrupted_bda.ms", "DATA"],
+      ["calibrated_bda.ms", "CORRECTED_DATA"]
+    ],
+    "size": [512, 512],
+    "fov_deg": [0.01, 0.01],
+    "ra_deg": -90.35458487600000,
+    "dec_deg": -7.67112399060000,
+    "w_planes": 0
+  },
+
+  "plotting":
+  {
+    "model": "model_DATA_dirty.fits",
+    "corrupted": "corrupted_DATA_dirty.fits",
+    "calibrated": "calibrated_CORRECTED_DATA_dirty.fits",
+    "model_bda": "model_bda_DATA_dirty.fits",
+    "corrupted_bda": "corrupted_bda_DATA_dirty.fits",
+    "calibrated_bda": "calibrated_bda_CORRECTED_DATA_dirty.fits"
+  },
+
+  "__imaging":
+  {
+    "data":
+    [
+      ["model.ms", "DATA"],
+      ["calibrated.ms", "MODEL_DATA"]
+    ],
+    "size": [512, 512],
+    "fov_deg": [0.001, 0.001],
+    "ra_deg": -90.3545848760,
+    "dec_deg": -8.5711239906,
+    "w_planes": 0
+  }
+}

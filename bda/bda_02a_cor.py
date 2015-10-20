@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 """Module to create corruptions."""
 
-import numpy as np
+import numpy
 import os
+from os.path import join
 import time
+import json
 import pickle
+import shutil
 from numpy import array, int32
-sys.path.append(os.path.join(os.getcwd(), 'scripts'))
-from bda_00_util import *
+from bda import utilities
 
 
 def get_time_info(ms):
     """."""
     tb.open(ms, nomodify=True)
-    times = np.unique(tb.getcol('TIME_CENTROID'))
+    times = numpy.unique(tb.getcol('TIME_CENTROID'))
     tb.close()
-    time_range = [np.min(times), np.max(times)]
+    time_range = [numpy.min(times), numpy.max(times)]
     num_times = len(times)
     length = time_range[1] - time_range[0]
     dt = length / (num_times - 1)
@@ -110,27 +112,27 @@ def add_extra_data_columns(ms):
         }
     }
     tb.addcols(cor_desc, cor_dminfo)
-    tb.putcol('CORRECTED_DATA', np.zeros((1, 1, tb.nrows()), dtype='c16'))
+    tb.putcol('CORRECTED_DATA', numpy.zeros((1, 1, tb.nrows()), dtype='c16'))
     tb.close()
 
 
 # TODO(BM) Split generation and apply of gains.
-def corrupt_data(ms):
+def corrupt_data(ms, settings):
     """."""
     num_antennas = get_num_antennas(ms)
     num_times, time_range, length, dt = get_time_info(ms)
 
     # ----------------------------------
-    tau = round(1.0 / dt) * dt
-    amp_std_t0 = 0.005
-    amp_H = 0.8
-    amp_adev_fbm = 1.0e-4
+    tau = round(settings['tau_s'] / dt) * dt
+    amp_std_t0 = settings['amplitude']['std_t0']
+    amp_H = settings['amplitude']['hurst']
+    amp_adev_fbm = settings['amplitude']['allan_var']
     amp_sigma_wn = 0.0
-    phase_std_t0 = 45.0
-    phase_H = 0.75
-    phase_adev_fbm = 2.0
+    phase_std_t0 = settings['phase']['std_t0']
+    phase_H = settings['phase']['hurst']
+    phase_adev_fbm = settings['phase']['allan_var']
     phase_sigma_wn = 0.0
-    np.random.seed(666)
+    numpy.random.seed(settings['seed'])
     # ----------------------------------
     print '-' * 60
     print 'dt  = %f' % dt
@@ -143,23 +145,24 @@ def corrupt_data(ms):
     Vpq = Vpq.flatten()
     num_vis = Vpq.shape[0]
     all_gains = {}
-    all_gains[0] = np.ones((num_times,), dtype='c16')
+    all_gains[0] = numpy.ones((num_times,), dtype='c16')
 
-    inv_gain = np.zeros((num_antennas, num_times), dtype='c16')
-    inv_conj_gain = np.zeros((num_antennas, num_times), dtype='c16')
+    inv_gain = numpy.zeros((num_antennas, num_times), dtype='c16')
+    inv_conj_gain = numpy.zeros((num_antennas, num_times), dtype='c16')
 
     # set value for ref. antenna
-    inv_gain[0, :] = np.ones((num_times,), dtype='c16')
-    inv_conj_gain[0, :] = np.ones((num_times,), dtype='c16')
+    inv_gain[0, :] = numpy.ones((num_times,), dtype='c16')
+    inv_conj_gain[0, :] = numpy.ones((num_times,), dtype='c16')
 
     # set gains for rest of antennas.
     for a in range(1, num_antennas):
-        g = eval_complex_gain(num_times, dt, amp_H, amp_adev_fbm,
-                              amp_sigma_wn, phase_H, phase_adev_fbm,
-                              phase_sigma_wn, amp_std_t0, phase_std_t0, tau)
+        g = utilities.eval_complex_gain(num_times, dt, amp_H, amp_adev_fbm,
+                                        amp_sigma_wn, phase_H, phase_adev_fbm,
+                                        phase_sigma_wn, amp_std_t0,
+                                        phase_std_t0, tau)
         all_gains[a] = g
         inv_gain[a, :] = 1. / g
-        inv_conj_gain[a, :] = np.conj(1. / g)
+        inv_conj_gain[a, :] = numpy.conj(1. / g)
 
     out_dir = os.path.dirname(ms)
     pickle.dump(all_gains, open(os.path.join(out_dir, 'gains.pickle'), 'w'))
@@ -175,19 +178,23 @@ def corrupt_data(ms):
                 idx += 1
 
     tb.open(ms, nomodify=False)
-    tb.putcol('DATA', np.reshape(Vpq, (1, 1, num_vis)))
-    tb.putcol('CORRECTED_DATA', np.reshape(Vpq, (1, 1, num_vis)))
+    tb.putcol('DATA', numpy.reshape(Vpq, (1, 1, num_vis)))
+    tb.putcol('CORRECTED_DATA', numpy.reshape(Vpq, (1, 1, num_vis)))
     tb.close()
 
 
-def main(sim_dir):
+def main(config_file):
     """."""
     tAll = time.time()
 
+    settings = utilities.byteify(json.load(open(config_file)))
+    sim_dir = settings['path']
+    settings = settings['corrupt']
+
     # ---------------------------------------------------
-    ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
-    ms = os.path.join(sim_dir, 'vis', 'corrupted.ms')
-    cal_table = os.path.join(sim_dir, 'vis', 'corrupted.gains')
+    ms_in = join(sim_dir, settings['input_ms'])
+    ms = join(sim_dir, settings['output_ms'])
+    cal_table = join(sim_dir, settings['gain_table'])
     # ---------------------------------------------------
 
     if os.path.isdir(ms):
@@ -196,7 +203,7 @@ def main(sim_dir):
         shutil.rmtree(cal_table)
 
     t0 = time.time()
-    copytree(ms_in, ms)
+    utilities.copytree(ms_in, ms)
     print '+ Coppied simulation data: %.3fs' % (time.time() - t0)
 
     t0 = time.time()
@@ -205,26 +212,13 @@ def main(sim_dir):
           % (time.time() - t0)
 
     t0 = time.time()
-    corrupt_data(ms)
+    corrupt_data(ms, settings)
     print '+ Apply of corruptions: %.3f s' % (time.time() - t0)
 
     print '+ Total time: %.3f s' % (time.time() - tAll)
 
+
 if __name__ == "__main__":
-    if len(sys.argv) - 1 < 1:
-        print 'Usage:'
-        print ('  $ casa --nologger --nogui -c scripts/bda_02_cor.py '
-               '<simulation dir>')
-        sys.exit(1)
-
-    sim_dir = sys.argv[-1]
-    if not os.path.isdir(sim_dir):
-        print 'ERROR: simulation directory not found!'
-        sys.exit(1)
-
-    print '-' * 60
-    print 'Simulation directory:', sim_dir
-    print '-' * 60
-
     os.nice(19)
-    main(sim_dir)
+    main(config_file)
+

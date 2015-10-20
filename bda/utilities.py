@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Module containing utility scripts for BDA simulation steps."""
+"""Module containing utility bda for BDA simulation steps."""
 
 import numpy as np
 import os
@@ -97,3 +97,15 @@ def copytree(src, dst, symlinks=False, ignore=None):
             shutil.copytree(s, d, symlinks, ignore)
         else:
             shutil.copy2(s, d)
+
+
+def byteify(input):
+    """Convert unicode string."""
+    if isinstance(input, dict):
+        return {byteify(key):byteify(value) for key,value in input.iteritems()}
+    elif isinstance(input, list):
+        return [byteify(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input

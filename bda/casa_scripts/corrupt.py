@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 """Module to create corruptions."""
 
-import numpy as np
-import sys
+import numpy
+import shutil
 import os
+from os.path import join
 import time
 import pickle
-sys.path.append(os.path.join(os.getcwd(), 'scripts'))
-from bda_00_util import *
+from bda import utilities
+import json
 
 
 def get_time_info(ms):
     """."""
     tb.open(ms, nomodify=True)
-    times = np.unique(tb.getcol('TIME_CENTROID'))
+    times = numpy.unique(tb.getcol('TIME_CENTROID'))
     tb.close()
-    time_range = [np.min(times), np.max(times)]
+    time_range = [numpy.min(times), numpy.max(times)]
     num_times = len(times)
     length = time_range[1] - time_range[0]
     dt = length / (num_times - 1)
@@ -45,19 +46,19 @@ def create_empty_caltable(ms, cal_table, num_times):
     tb.close()
 
 
-def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
+def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
     """Fill a CASA calibration table."""
     # ----------------------------------
-    tau = round(1.0 / dt) * dt
-    amp_std_t0 = 0.005
-    amp_H = 0.8
-    amp_adev_fbm = 1.0e-4
+    tau = round(settings['tau_s'] / dt) * dt
+    amp_std_t0 = settings['amplitude']['std_t0']
+    amp_H = settings['amplitude']['hurst']
+    amp_adev_fbm = settings['amplitude']['allan_var']
     amp_sigma_wn = 0.0
-    phase_std_t0 = 45.0
-    phase_H = 0.75
-    phase_adev_fbm = 2.0
+    phase_std_t0 = settings['phase']['std_t0']
+    phase_H = settings['phase']['hurst']
+    phase_adev_fbm = settings['phase']['allan_var']
     phase_sigma_wn = 0.0
-    np.random.seed(666)
+    numpy.random.seed(settings['seed'])
     # ----------------------------------
     print '-' * 60
     print 'dt  = %f' % dt
@@ -66,7 +67,7 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
 
     out_dir = os.path.dirname(cal_table)
     all_gains = {}
-    all_gains[0] = np.ones((num_times,), dtype='c16')
+    all_gains[0] = numpy.ones((num_times,), dtype='c16')
     tb.open(cal_table, nomodify=False)
     for t in range(0, num_times):
         row = 0 + t * num_stations
@@ -78,10 +79,10 @@ def fill_caltable(cal_table, num_stations, num_times, time_range, dt):
 
     tb.open(cal_table, nomodify=False)
     for s in range(1, num_stations):
-        gains = eval_complex_gain(num_times, dt,
-                                  amp_H, amp_adev_fbm, amp_sigma_wn,
-                                  phase_H, phase_adev_fbm, phase_sigma_wn,
-                                  amp_std_t0, phase_std_t0, tau)
+        gains = utilities.eval_complex_gain(num_times, dt, amp_H, amp_adev_fbm,
+                                            amp_sigma_wn, phase_H,
+                                            phase_adev_fbm, phase_sigma_wn,
+                                            amp_std_t0, phase_std_t0, tau)
         all_gains[s] = gains
         for t in range(0, num_times):
             row = s + t * num_stations
@@ -107,7 +108,7 @@ def run_applycal(ms, cal_table):
 
 
 def scratch_columns_create(ms):
-    """."""
+    """Adds scratch columns (CORRECTED_DATA and MODEL_DATA) to the ms."""
     tb.open(ms)
     colnames = tb.colnames()
     tb.close()
@@ -116,7 +117,7 @@ def scratch_columns_create(ms):
 
 
 def copy_column(ms, src_col, dst_col):
-    """."""
+    """Copy data from one column to another in a Measurement Set."""
     tb.open(ms, nomodify=False)
     num_rows = tb.nrows()
     rows_read = 0
@@ -130,14 +131,18 @@ def copy_column(ms, src_col, dst_col):
     tb.close()
 
 
-def main(sim_dir):
+def main(config_file):
     """."""
     tAll = time.time()
 
+    settings = utilities.byteify(json.load(open(config_file)))
+    sim_dir = settings['path']
+    settings = settings['corrupt']
+
     # ---------------------------------------------------
-    ms_in = os.path.join(sim_dir, 'vis', 'model.ms')
-    ms = os.path.join(sim_dir, 'vis', 'corrupted.ms')
-    cal_table = os.path.join(sim_dir, 'vis', 'corrupted.gains')
+    ms_in = join(sim_dir, settings['input_ms'])
+    ms = join(sim_dir, settings['output_ms'])
+    cal_table = join(sim_dir, settings['gain_table'])
     # ---------------------------------------------------
 
     if os.path.isdir(ms):
@@ -147,7 +152,7 @@ def main(sim_dir):
 
     t0 = time.time()
     print '+ Coping simulated MS %s to %s ...' % (ms_in, ms)
-    copytree(ms_in, ms)
+    utilities.copytree(ms_in, ms)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
@@ -180,7 +185,7 @@ def main(sim_dir):
 
     t0 = time.time()
     print '+ Filling calibration table'
-    fill_caltable(cal_table, num_stations, num_times, time_range, dt)
+    fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
@@ -198,20 +203,5 @@ def main(sim_dir):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) - 1 < 1:
-        print 'Usage:'
-        print ('  $ casa --nologger --nogui -c scripts/bda_02_cor.py '
-               '<simulation dir>')
-        sys.exit(1)
-
-    sim_dir = sys.argv[-1]
-    if not os.path.isdir(sim_dir):
-        print 'ERROR: simulation directory not found!'
-        sys.exit(1)
-
-    print '-' * 60
-    print 'Simulation directory:', sim_dir
-    print '-' * 60
-
     os.nice(19)
-    main(sim_dir)
+    main(config_file)

@@ -16,3 +16,5 @@ venv
 
 stef_*
 f2f
+TEMP
+*.pyc

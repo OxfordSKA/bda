@@ -9,7 +9,7 @@ import subprocess
 if __name__ == "__main__":
     if len(sys.argv) - 1 < 1:
         print 'Usage:'
-        print ('  $ python scripts/bda_03a_ave.py '
+        print ('  $ python bda/bda_03a_ave.py '
                '<simulation dir>')
         sys.exit(1)
 
