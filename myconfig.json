@@ -1,7 +1,8 @@
 {
   "path": "TEMP",
-  "_steps": ["sim", "corrupt", "bda", "calibrate", "image", "plot"],
-  "steps": ["plot"],
+  "_steps": [ "sim", "corrupt", "bda", "calibrate", "image", "plot"],
+  "_steps": ["plot"],
+  "steps": [ "sim", "image", "plot"],
 
   "sim":
   {

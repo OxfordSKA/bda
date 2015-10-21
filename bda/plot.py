@@ -32,15 +32,11 @@ def get_hdu_diff(file1, file2, flux_scale=1.0e3):
     d *= flux_scale
     return pyfits.PrimaryHDU(d, h1), d
 
-
-def run(settings):
+def plot_model_bda(settings):
     sim_dir = settings['path']
     plotting = settings['plotting']
-
-    stretch='linear'
-
+    stretch = 'linear'
     fig = plt.figure(figsize=(6.5, 10.0))
-
     subplot = (2, 1, 1)
     hdu, data = get_hdu(join(sim_dir, plotting['model']))
     cmin = data.min()
@@ -98,7 +94,37 @@ def run(settings):
     f.grid.set_linestyle('--')
     f.grid.set_alpha(0.3)
     f.set_title('bda model - model', fontsize='small', weight='bold')
-
-
     plt.savefig(join(sim_dir, 'test.png'), dpi=600)
     plt.show()
+
+def plot_model(settings):
+    sim_dir = settings['path']
+    plotting = settings['plotting']
+    stretch = 'linear'
+    fig = plt.figure(figsize=(6.5, 5.0))
+    hdu, data = get_hdu(join(sim_dir, plotting['model']))
+    cmin = data.min()
+    cmax = data.max()
+    f = aplpy.FITSFigure(hdu, figure=fig)
+    f.show_colorscale(vmin=cmin, vmax=cmax, stretch=stretch, cmap='afmhot')
+    f.add_colorbar()
+    f.colorbar.set_width(0.1)
+    f.colorbar.set_axis_label_text(r'mJy / beam')
+    f.colorbar.set_axis_label_font(size='small')
+    f.tick_labels.set_font(size='small')
+    f.axis_labels.set_font(size='small')
+    f.set_yaxis_coord_type('scalar')
+    f.set_xaxis_coord_type('scalar')
+    f.tick_labels.set_yformat('%.3f')
+    f.tick_labels.set_xformat('%.3f')
+    f.add_grid()
+    f.grid.set_color('white')
+    f.grid.set_linestyle('--')
+    f.grid.set_alpha(0.3)
+    f.set_title('model', fontsize='small', weight='bold')
+    plt.savefig(join(sim_dir, 'model_1.png'), dpi=600)
+
+
+def run(settings):
+    # plot_model_bda(settings)
+    plot_model(settings)

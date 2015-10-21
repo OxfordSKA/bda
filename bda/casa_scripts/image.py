@@ -91,6 +91,9 @@ if __name__ == "__main__":
         settings = settings['imaging']
         for data in settings['data']:
             ms = join(sim_dir, data[0])
+            if not os.path.isdir(ms):
+                print 'WARNING: MS not found, skipping imaging. (%s)' % ms
+                continue
             root_name = os.path.splitext(ms)[0]
             column = data[1]
             if os.path.exists('{}_{}_dirty.fits'.format(root_name, column)):
