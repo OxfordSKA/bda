@@ -68,9 +68,9 @@ def run_interferometer(ini, verbose=True):
         subprocess.call(["oskar_sim_interferometer", "-q", ini])
 
 
-def create_settings(settings):
+def create_settings(settings, settings_group_name='sim'):
     """Create simulation settings file."""
-    sim = settings['sim']
+    sim = settings[settings_group_name]
     obs = sim['observation']
     tel = sim['telescope']
 
@@ -114,17 +114,18 @@ def create_settings(settings):
     return s
 
 
-def run(settings, verbose=True):
+def run(settings, verbose=True, settings_group_name='sim'):
     """Run the OSKAR simulation."""
-    obs = settings['sim']['observation']
+    sim = settings[settings_group_name]
+    obs = sim['observation']
     ra, dec = source_ring(obs['ra_deg'], obs['dec_deg'])
     stokes_i = numpy.ones(ra.shape)
     stokes_i[-1] = 0.5
     # create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
-    sky_file = join(settings['path'], settings['sim']['sky_file'])
+    sky_file = join(settings['path'], sim['sky_file'])
     create_sky_model(sky_file, ra, dec, stokes_i)
-    create_settings(settings)
-    ini_file = join(settings['path'], settings['sim']['ini_file'])
+    create_settings(settings, settings_group_name)
+    ini_file = join(settings['path'], sim['ini_file'])
     run_interferometer(ini_file, verbose)
-    return settings['sim']['output_ms']
+    return sim['output_ms']
 

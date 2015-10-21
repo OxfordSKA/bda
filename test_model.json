@@ -1,0 +1,72 @@
+{
+  "path": "TEST_models",
+
+  "sim1":
+  {
+    "output_ms": "model_n001_dt0.100.ms",
+    "ini_file": "test_n001_dt0.100.ini",
+    "sky_file": "sky_n001_dt0.100.osm",
+    "telescope":
+    {
+      "path": "models/ska1_meerkat_mid_combined_july_2015.tm",
+      "lon_deg": 21.442909,
+      "lat_deg": -30.739475
+    },
+    "observation":
+    {
+      "ra_deg": -90.3545848760,
+      "dec_deg": -8.5711239906,
+      "freq_hz": 700.0e6,
+      "channel_bw_hz": 0.0,
+      "start_time_mjd": 57086.113194,
+      "dt_s": 0.1,
+      "num_times": 1
+    }
+  },
+
+  "sim2":
+  {
+    "output_ms": "model_n100_dt0.001.ms",
+    "ini_file": "test_n100_dt0.001.ini",
+    "sky_file": "sky_n100_dt0.001.osm",
+    "telescope":
+    {
+      "path": "models/ska1_meerkat_mid_combined_july_2015.tm",
+      "lon_deg": 21.442909,
+      "lat_deg": -30.739475
+    },
+    "observation":
+    {
+      "ra_deg": -90.3545848760,
+      "dec_deg": -8.5711239906,
+      "freq_hz": 700.0e6,
+      "channel_bw_hz": 0.0,
+      "start_time_mjd": 57086.113194,
+      "dt_s": 0.001,
+      "num_times": 100
+    }
+  },
+
+  "imaging":
+  {
+    "overwrite": true,
+    "data":
+    [
+      ["model_n001_dt0.100.ms", "DATA"],
+      ["model_n100_dt0.001.ms", "DATA"]
+    ],
+    "size": [512, 512],
+    "fov_deg": [0.02, 0.02],
+    "ra_deg": -90.35458487600000,
+    "dec_deg": -7.67112399060000,
+    "w_planes": 0
+  },
+
+  "plotting":
+  {
+    "model": "model_1_DATA_dirty.fits",
+    "model_1": "model_1_DATA_dirty.fits",
+    "model_2": "model_2_DATA_dirty.fits"
+  }
+
+}
