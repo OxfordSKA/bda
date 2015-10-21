@@ -100,5 +100,5 @@ def run(settings):
     f.set_title('bda model - model', fontsize='small', weight='bold')
 
 
-    plt.savefig('test.png', dpi=600)
-    # plt.show()
+    plt.savefig(join(sim_dir, 'test.png'), dpi=600)
+    plt.show()

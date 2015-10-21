@@ -90,13 +90,17 @@ def eval_complex_gain(n, dt, amp_H, amp_adev_fbm, amp_sigma_wn,
 
 def copytree(src, dst, symlinks=False, ignore=None):
     """Copy a directory tree."""
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
-        else:
-            shutil.copy2(s, d)
+    shutil.copytree(src, dst, symlinks, ignore)
+#    for item in os.listdir(src):
+#        s = os.path.join(src, item)
+#        d = os.path.join(dst, item)
+#        print s, '->', d,
+#        if os.path.isdir(s):
+#            print 'shutil.copytree()...'
+#            shutil.copytree(s, d, symlinks, ignore)
+#        else:
+#            print 'shutil.copy2()...'
+#            shutil.copy2(s, d)
 
 
 def byteify(input):
