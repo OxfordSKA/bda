@@ -79,6 +79,12 @@ def create_settings(settings, settings_group_name='sim'):
         os.mkdir(os.path.dirname(ms_path))
 
     sky_file = join(settings['path'], sim['sky_file'])
+    if 'time_smearing' in sim and sim['time_smearing'] == False:
+        dt_ave = 0.0
+    else:
+        dt_ave = obs['dt_s']
+
+    print settings_group_name, dt_ave
 
     s = OrderedDict()
     s['simulator/'] = {
@@ -105,7 +111,7 @@ def create_settings(settings, settings_group_name='sim'):
         'station_type': 'Isotropic beam'
     }
     s['interferometer/'] = {
-        'time_average_sec': obs['dt_s'],
+        'time_average_sec': dt_ave,
         'channel_bandwidth_hz': obs['channel_bw_hz'],
         'ms_filename': ms_path
     }
@@ -118,12 +124,12 @@ def run(settings, verbose=True, settings_group_name='sim'):
     """Run the OSKAR simulation."""
     sim = settings[settings_group_name]
     obs = sim['observation']
-    ra, dec = source_ring(obs['ra_deg'], obs['dec_deg'])
-    stokes_i = numpy.ones(ra.shape)
-    stokes_i[-1] = 0.5
-    # create_sky_model(sky, [ra0], [dec0 + 0.9], [1.0])
     sky_file = join(settings['path'], sim['sky_file'])
-    create_sky_model(sky_file, ra, dec, stokes_i)
+    # ra, dec = source_ring(obs['ra_deg'], obs['dec_deg'])
+    # stokes_i = numpy.ones(ra.shape)
+    # stokes_i[-1] = 0.5
+    # create_sky_model(sky_file, ra, dec, stokes_i)
+    create_sky_model(sky_file, [obs['ra_deg']], [obs['dec_deg']+0.9], [1.0])
     create_settings(settings, settings_group_name)
     ini_file = join(settings['path'], sim['ini_file'])
     run_interferometer(ini_file, verbose)

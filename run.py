@@ -22,7 +22,13 @@ if __name__ == '__main__':
         print "Error: Config file '%s' not found!" % args.config
         exit(1)
 
-    settings = json.load(open(args.config))
+    try:
+        settings = json.load(open(args.config))
+    except ValueError as e:
+        print 'ERROR: FAILED TO PARSE JSON CONFIG FILE!!'
+        print e.message
+        exit(1)
+
     run_steps = settings['steps']
 
     # Spawn a CASA process to work with and put the config_file variable to
