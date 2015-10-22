@@ -94,7 +94,7 @@ def plot_model_bda(settings):
     f.grid.set_linestyle('--')
     f.grid.set_alpha(0.3)
     f.set_title('bda model - model', fontsize='small', weight='bold')
-    plt.savefig(join(sim_dir, 'test.png'), dpi=600)
+    plt.savefig(join(sim_dir, 'test.png'), dpi=300)
     plt.show()
 
 def plot_model(settings):
@@ -122,7 +122,7 @@ def plot_model(settings):
     f.grid.set_linestyle('--')
     f.grid.set_alpha(0.3)
     f.set_title('model', fontsize='small', weight='bold')
-    plt.savefig(join(sim_dir, 'model.png'), dpi=600)
+    plt.savefig(join(sim_dir, 'model.png'), dpi=300)
 
 
 def plot_model_diff(settings):
@@ -223,7 +223,7 @@ def plot_model_diff(settings):
     ax.grid(True)
 
 
-    plt.savefig(join(sim_dir, 'model_diff.png'), dpi=600)
+    plt.savefig(join(sim_dir, 'model_diff.png'), dpi=300)
 
 
 def run(settings):
