@@ -1,9 +1,10 @@
 #!venv/bin/python
+# -*- coding: utf-8 -*-
 
 import json
 import os
 import argparse
-from os.path import isdir, join
+from os.path import join
 from shutil import copyfile
 import drivecasa
 from bda import simulate, plot
@@ -29,13 +30,11 @@ if __name__ == '__main__':
         print e.message
         exit(1)
 
-    run_steps = settings['steps']
-
-    # Spawn a CASA process to work with and put the config_file variable to
-    # the CASA variable list.
+    # Spawn a CASA process to work with.
     casa = drivecasa.Casapy(working_dir=os.path.curdir,
                             casa_logfile=False,
                             echo_to_stdout=True)
+    # Add config_file variable to the CASA variable list.
     casa.run_script(["config_file = '{}'".format(args.config)])
 
     # Top level simulation output directory.
@@ -47,30 +46,25 @@ if __name__ == '__main__':
     copyfile(args.config, join(sim_dir, args.config))
 
     # Simulation.
-    if "sim" in run_steps and not \
-            isdir(join(sim_dir, settings['sim']['output_ms'])):
-        simulate.run(settings)
+    simulate.run(settings, overwrite=False)
 
-    # Corrupt simulation.
-    if "corrupt" in run_steps and not \
-            isdir(join(sim_dir, settings['corrupt']['output_ms'])):
-        casa.run_script_from_file('bda/casa_scripts/corrupt.py')
+    # Introduce gain corruptions to the sub-sampled simulation.
+    casa.run_script_from_file('bda/casa_scripts/corrupt.py')
+
+    # Average sub-sampled model and corrupted model.
+    casa.run_script_from_file('bda/casa_scripts/average_ms.py')
+
+    # TODO-BM add thermal noise.
 
     # Baseline dependent averaging.
-    if "bda" in run_steps and not \
-            isdir(join(sim_dir, settings['baseline_average']['output_ms'][0])):
-        casa.run_script_from_file('bda/casa_scripts/baseline_average.py')
+    # casa.run_script_from_file('bda/casa_scripts/baseline_average.py')
 
     # Calibration.
-    if "calibrate" in run_steps and not \
-            isdir(join(sim_dir, settings['calibration']['output_ms'][0])):
-        casa.run_script_from_file('bda/casa_scripts/calibration.py')
+    casa.run_script_from_file('bda/casa_scripts/calibration.py')
 
     # Image.
-    if "image" in run_steps:
-        casa.run_script_from_file('bda/casa_scripts/image.py')
+    casa.run_script_from_file('bda/casa_scripts/image.py')
 
     # Plot results.
-    if "plot" in run_steps:
-        plot.run(settings)
+    # plot.run(settings)
 

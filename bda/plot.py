@@ -7,6 +7,7 @@ from os.path import join
 import matplotlib.pyplot as plt
 import pyfits
 import aplpy
+import pickle
 
 
 def adjust_header(header):
@@ -125,108 +126,133 @@ def plot_model(settings):
     plt.savefig(join(sim_dir, 'model.png'), dpi=300)
 
 
-def plot_model_diff(settings):
+def plot_corrupting_gains(settings):
     sim_dir = settings['path']
-    plotting = settings['plotting']
-    stretch = 'linear'
-    fig = plt.figure(figsize=(13.0, 20.0))
-    hdu, data = get_hdu_diff(join(sim_dir, plotting['model_1']),
-                             join(sim_dir, plotting['model_1_ns']),
-                             1.0e6)
-    cmin = data.min()
-    cmax = data.max()
-    f = aplpy.FITSFigure(hdu, figure=fig, subplot=(4, 2, 1))
-    f.show_colorscale(vmin=cmin, vmax=cmax, stretch=stretch, cmap='afmhot')
-    f.add_colorbar()
-    f.colorbar.set_width(0.1)
-    f.colorbar.set_axis_label_text(r'$\mu$Jy / beam')
-    f.colorbar.set_axis_label_font(size='small')
-    f.tick_labels.set_font(size='x-small')
-    f.axis_labels.set_font(size='x-small')
-    f.add_grid()
-    f.grid.set_color('white')
-    f.grid.set_linestyle('--')
-    f.grid.set_alpha(0.3)
-    f.set_title('model_1 - model_1_ns', fontsize='small', weight='bold')
-    ax = fig.add_subplot(422)
-    ax.plot(data[0, 0, data.shape[2]/2, :], 'x-', markersize=2.0)
-    ax.set_xlim(0, 512)
+    gains = pickle.load(open(join(sim_dir, settings['plotting']['gains'])))
+    # Gains is a dict where the key is the antenna and the value is the list
+    # of complex gains as a function of time.
+    fig, axes2d = plt.subplots(nrows=2, sharex=True, figsize=(6.5, 5.0))
+    fig.subplots_adjust(left=0.15, bottom=0.10, right=0.99, top=0.94,
+                        hspace=0.1, wspace=0.0)
+    ax = axes2d[0]
+    for i in range(197):
+        ax.plot(numpy.abs(gains[i]))
+    ax.set_ylabel('Amplitude', fontsize='small')
     ax.grid(True)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
 
-    hdu, data = get_hdu_diff(join(sim_dir, plotting['model_1']),
-                             join(sim_dir, plotting['model_3_ave']),
-                             1.0e6)
-    cmin = data.min()
-    cmax = data.max()
-    f = aplpy.FITSFigure(hdu, figure=fig, subplot=(4, 2, 3))
-    f.show_colorscale(vmin=cmin, vmax=cmax, stretch=stretch, cmap='afmhot')
-    f.add_colorbar()
-    f.colorbar.set_width(0.1)
-    f.colorbar.set_axis_label_text(r'$\mu$Jy / beam')
-    f.colorbar.set_axis_label_font(size='small')
-    f.tick_labels.set_font(size='x-small')
-    f.axis_labels.set_font(size='x-small')
-    f.add_grid()
-    f.grid.set_color('white')
-    f.grid.set_linestyle('--')
-    f.grid.set_alpha(0.3)
-    f.set_title('model_1 - model_3_ave', fontsize='small', weight='bold')
-    ax = fig.add_subplot(424)
-    ax.plot(data[0, 0, data.shape[2]/2, :], 'x-', markersize=2.0)
-    ax.set_xlim(0, 512)
+    ax = axes2d[1]
+    for i in range(197):
+        ax.plot(numpy.degrees(numpy.angle(gains[i])))
+    ax.set_ylabel('Phase [degrees]', fontsize='small')
     ax.grid(True)
+    ax.set_ylim(-90, 90)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    plt.savefig(join(sim_dir, 'gains_all.png'), dpi=300)
 
-    hdu, data = get_hdu_diff(join(sim_dir, plotting['model_1']),
-                             join(sim_dir, plotting['model_3_ns_ave']),
-                             1.0e6)
-    cmin = data.min()
-    cmax = data.max()
-    f = aplpy.FITSFigure(hdu, figure=fig, subplot=(4, 2, 5))
-    f.show_colorscale(vmin=cmin, vmax=cmax, stretch=stretch, cmap='afmhot')
-    f.add_colorbar()
-    f.colorbar.set_width(0.1)
-    f.colorbar.set_axis_label_text(r'$\mu$Jy / beam')
-    f.colorbar.set_axis_label_font(size='small')
-    f.tick_labels.set_font(size='x-small')
-    f.axis_labels.set_font(size='x-small')
-    f.add_grid()
-    f.grid.set_color('white')
-    f.grid.set_linestyle('--')
-    f.grid.set_alpha(0.3)
-    f.set_title('model_1 - model_3_ns_ave', fontsize='small', weight='bold')
-    ax = fig.add_subplot(426)
-    ax.plot(data[0, 0, data.shape[2]/2, :], 'x-', markersize=2.0)
-    ax.set_xlim(0, 512)
+    antennas = range(5)
+    fig, axes2d = plt.subplots(nrows=2, sharex=True, figsize=(6.5, 5.0))
+    fig.subplots_adjust(left=0.15, bottom=0.10, right=0.99, top=0.85,
+                        hspace=0.1, wspace=0.0)
+    ax = axes2d[0]
+    for i in antennas:
+        ax.plot(numpy.abs(gains[i]), linewidth=0.5, label='antenna %i' % i)
+    ax.set_ylabel('Amplitude', fontsize='small')
     ax.grid(True)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    ax.legend(bbox_to_anchor=(0, 1.02, 1.00, 0.5),
+              loc=4,
+              labelspacing=0.1,
+              # mode='expand',
+              borderaxespad=0,
+              handlelength=3.0,
+              ncol=3,
+              fontsize='x-small')
 
-    hdu, data = get_hdu_diff(join(sim_dir, plotting['model_3_ave']),
-                             join(sim_dir, plotting['model_3_ns_ave']),
-                             1.0e6)
-    cmin = data.min()
-    cmax = data.max()
-    f = aplpy.FITSFigure(hdu, figure=fig, subplot=(4, 2, 7))
-    f.show_colorscale(vmin=cmin, vmax=cmax, stretch=stretch, cmap='afmhot')
-    f.add_colorbar()
-    f.colorbar.set_width(0.1)
-    f.colorbar.set_axis_label_text(r'$\mu$Jy / beam')
-    f.colorbar.set_axis_label_font(size='small')
-    f.tick_labels.set_font(size='x-small')
-    f.axis_labels.set_font(size='x-small')
-    f.add_grid()
-    f.grid.set_color('white')
-    f.grid.set_linestyle('--')
-    f.grid.set_alpha(0.3)
-    f.set_title('model_3_ave - model_3_ns_ave', fontsize='small', weight='bold')
-    ax = fig.add_subplot(428)
-    ax.plot(data[0, 0, data.shape[2]/2, :], 'x-', markersize=2.0)
-    ax.set_xlim(0, 512)
+    ax = axes2d[1]
+    for i in antennas:
+        ax.plot(numpy.degrees(numpy.angle(gains[i])), linewidth=0.5)
+    ax.set_ylabel('Phase [degrees]', fontsize='small')
     ax.grid(True)
+    # ax.set_ylim(-180, 180)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    ax.set_xlabel('Time index', fontsize='small')
+    plt.savefig(join(sim_dir, 'gains.png'), dpi=300)
 
+    i0 = 100
+    i1 = i0 + settings['sim']['observation']['over_sample'] * 4
+    fig, axes2d = plt.subplots(nrows=2, sharex=True, figsize=(6.5, 5.0))
+    fig.subplots_adjust(left=0.15, bottom=0.10, right=0.99, top=0.85,
+                        hspace=0.1, wspace=0.0)
+    ax = axes2d[0]
+    for i in antennas:
+        ax.plot(numpy.arange(i0, i1), numpy.abs(gains[i][i0:i1]),
+                linewidth=0.5, marker='x',
+                markersize=2.0, label='antenna %i' % i)
+    ax.set_ylabel('Amplitude', fontsize='small')
+    ax.grid(True)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    ax.legend(bbox_to_anchor=(0, 1.02, 1.00, 0.5),
+              loc=4,
+              labelspacing=0.1,
+              # mode='expand',
+              borderaxespad=0,
+              handlelength=3.0,
+              ncol=3,
+              fontsize='x-small')
 
-    plt.savefig(join(sim_dir, 'model_diff.png'), dpi=300)
+    ax = axes2d[1]
+    for i in antennas:
+        ax.plot(numpy.arange(i0, i1),
+                numpy.degrees(numpy.angle(gains[i][i0:i1])), linewidth=0.5,
+                marker='x', markersize=2.0)
+    ax.set_ylabel('Phase [degrees]', fontsize='small')
+    ax.grid(True)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    ax.set_xlabel('Time index', fontsize='small')
+    plt.savefig(join(sim_dir, 'gains_zoom.png'), dpi=300)
+
+    antennas = [4]
+    fig, axes2d = plt.subplots(nrows=2, sharex=True, figsize=(6.5, 5.0))
+    fig.subplots_adjust(left=0.15, bottom=0.10, right=0.99, top=0.85,
+                        hspace=0.1, wspace=0.0)
+    ax = axes2d[0]
+    for i in antennas:
+        ax.plot(numpy.arange(i0, i1), numpy.abs(gains[i][i0:i1]),
+                linewidth=0.5, marker='x',
+                markersize=2.0, label='antenna %i' % i)
+    ax.set_ylabel('Amplitude', fontsize='small')
+    ax.grid(True)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    ax.legend(bbox_to_anchor=(0, 1.02, 1.00, 0.5),
+              loc=4,
+              labelspacing=0.1,
+              # mode='expand',
+              borderaxespad=0,
+              handlelength=3.0,
+              ncol=3,
+              fontsize='x-small')
+
+    ax = axes2d[1]
+    for i in antennas:
+        ax.plot(numpy.arange(i0, i1),
+                numpy.degrees(numpy.angle(gains[i][i0:i1])), linewidth=0.5,
+                marker='x', markersize=2.0)
+    ax.set_ylabel('Phase [degrees]', fontsize='small')
+    ax.grid(True)
+    ax.tick_params(axis='both', which='minor', labelsize='x-small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
+    ax.set_xlabel('Time index', fontsize='small')
+    plt.savefig(join(sim_dir, 'gains_zoom_2.png'), dpi=300)
 
 
 def run(settings):
     # plot_model_bda(settings)
-    plot_model(settings)
-    plot_model_diff(settings)
+    plot_corrupting_gains(settings)

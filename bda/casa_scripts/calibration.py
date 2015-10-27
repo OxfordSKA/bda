@@ -29,32 +29,39 @@ if __name__ == "__main__":
 
     # -------------------------------------------------------------------------
     sim_dir = settings['path']
-    settings = settings['calibration']
+    calib = settings['calibration']
     # -------------------------------------------------------------------------
 
-    for p in zip(settings['input_ms'], settings['output_ms'],
-                 settings['gain_table']):
-        ms_in = join(sim_dir, p[0])
-        ms = join(sim_dir, p[1])
-        cal_table = join(sim_dir, p[2])
-        if os.path.isdir(ms_in) and not os.path.isdir(ms):
-            print '-- Calibrating %s' % ms
-            if os.path.isdir(ms):
-                print '  * Removing existing MS : %s' % ms
-                shutil.rmtree(ms)
-            utilities.copytree(ms_in, ms)
-            # os.system('cp -r %s %s' % (ms_in, ms))
+    ms_files = [f for f in os.listdir(os.path.abspath(sim_dir))
+                if f.endswith('.ms') and os.path.isdir(join(sim_dir, f))]
 
-            t0 = time.time()
-            run_gaincal(ms, cal_table)
-            print '*' * 80
-            print '+ Gaincal completed in %.3fs' % (time.time() - t0)
-            print '*' * 80
-            print '\n' * 3
+    for ms in ms_files:
+        if settings['corrupt']['output_ms'] in ms:
+            print ms
 
-            t0 = time.time()
-            run_applycal(ms, cal_table)
-            print '*' * 80
-            print '+ Applycal completed in %.3fs' % (time.time() - t0)
-            print '*' * 80
-            print '\n' * 3
+    # for p in zip(settings['input_ms'], settings['output_ms'],
+    #              settings['gain_table']):
+    #     ms_in = join(sim_dir, p[0])
+    #     ms = join(sim_dir, p[1])
+    #     cal_table = join(sim_dir, p[2])
+    #     if os.path.isdir(ms_in) and not os.path.isdir(ms):
+    #         print '-- Calibrating %s' % ms
+    #         if os.path.isdir(ms):
+    #             print '  * Removing existing MS : %s' % ms
+    #             shutil.rmtree(ms)
+    #         utilities.copytree(ms_in, ms)
+    #         # os.system('cp -r %s %s' % (ms_in, ms))
+    #
+    #         t0 = time.time()
+    #         run_gaincal(ms, cal_table)
+    #         print '*' * 80
+    #         print '+ Gaincal completed in %.3fs' % (time.time() - t0)
+    #         print '*' * 80
+    #         print '\n' * 3
+    #
+    #         t0 = time.time()
+    #         run_applycal(ms, cal_table)
+    #         print '*' * 80
+    #         print '+ Applycal completed in %.3fs' % (time.time() - t0)
+    #         print '*' * 80
+    #         print '\n' * 3

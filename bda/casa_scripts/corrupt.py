@@ -20,7 +20,7 @@ def get_time_info(ms):
     num_times = len(times)
     length = time_range[1] - time_range[0]
     dt = length / (num_times - 1)
-    return num_times, time_range, length, dt
+    return num_times, time_range, length + dt, dt
 
 
 def get_num_antennas(ms):
@@ -63,6 +63,7 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
     print '-' * 60
     print 'dt  = %f' % dt
     print 'tau = %f' % tau
+    print 'obs. length = %f' % ((time_range[1] - time_range[0]) + dt)
     print '-' * 60
 
     out_dir = os.path.dirname(cal_table)
@@ -92,7 +93,9 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
             tb.putcell('CPARAM', row, gain)
             tb.putcell('TIME', row, time_range[0] + t * dt)
 
-    pickle.dump(all_gains, open(os.path.join(out_dir, 'gains.pickle'), 'w'))
+    gains_pickle = join(out_dir, 'sub_sampled_' + settings['gain_table'] +
+                        '.pickle')
+    pickle.dump(all_gains, open(gains_pickle, 'w'))
 
     tb.close()
 
@@ -140,35 +143,36 @@ def main(config_file):
     settings = settings['corrupt']
 
     # ---------------------------------------------------
-    ms_in = join(sim_dir, settings['input_ms'])
-    ms = join(sim_dir, settings['output_ms'])
-    cal_table = join(sim_dir, settings['gain_table'])
+    ms_in = join(sim_dir, 'sub_sampled_' + settings['input_ms'])
+    ms_out = join(sim_dir, 'sub_sampled_' + settings['output_ms'])
+    cal_table = join(sim_dir, 'sub_sampled_' + settings['gain_table'])
     # ---------------------------------------------------
 
-    if os.path.isdir(ms):
-        shutil.rmtree(ms)
+    if os.path.isdir(ms_out):
+        return
+
     if os.path.isdir(cal_table):
         shutil.rmtree(cal_table)
 
     t0 = time.time()
-    print '+ Coping simulated MS %s to %s ...' % (ms_in, ms)
-    utilities.copytree(ms_in, ms)
+    print '+ Coping simulated MS %s to %s ...' % (ms_in, ms_out)
+    utilities.copytree(ms_in, ms_out)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
     print '+ Creating scratch (CORRECTED_DATA & MODEL_DATA) columns in MS ...'
-    scratch_columns_create(ms)
+    scratch_columns_create(ms_out)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
     print '+ Copy DATA to MODEL_DATA ...'
-    copy_column(ms, 'DATA', 'MODEL_DATA')
+    copy_column(ms_out, 'DATA', 'MODEL_DATA')
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
-    num_times, time_range, obs_length, dt = get_time_info(ms)
-    num_stations = get_num_antennas(ms)
+    num_times, time_range, obs_length, dt = get_time_info(ms_out)
+    num_stations = get_num_antennas(ms_out)
     print '-' * 80
-    print '+ MS           : %s' % ms
+    print '+ MS           : %s' % ms_out
     print '+ Cal table    : %s' % cal_table
     print '+ No. times    : %i' % num_times
     print '+ Time range   : %f %f' % (time_range[0], time_range[1])
@@ -180,7 +184,7 @@ def main(config_file):
 
     t0 = time.time()
     print '+ Creating calibration table ...'
-    create_empty_caltable(ms, cal_table, num_times)
+    create_empty_caltable(ms_out, cal_table, num_times)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
@@ -190,12 +194,12 @@ def main(config_file):
 
     t0 = time.time()
     print '+ Applying calibration ...'
-    run_applycal(ms, cal_table)
+    run_applycal(ms_out, cal_table)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
     print '+ Updating data column ...'
-    copy_column(ms, 'CORRECTED_DATA', 'DATA')
+    copy_column(ms_out, 'CORRECTED_DATA', 'DATA')
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     # TODO(BM) add white noise (do this before/ after applying gain errors?!)

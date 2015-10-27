@@ -9,7 +9,7 @@ import numpy
 import math
 
 
-def create_sky_model(sky_file, ra, dec, stokes_i_flux):
+def _create_sky_model(sky_file, ra, dec, stokes_i_flux):
     """Create an OSKAR sky model.
 
     Args:
@@ -29,7 +29,7 @@ def create_sky_model(sky_file, ra, dec, stokes_i_flux):
     fh.close()
 
 
-def source_ring(ra0_deg, dec0_deg, radius_deg=0.9):
+def _source_ring(ra0_deg, dec0_deg, radius_deg=0.9):
     """Generate a ring of sources around the phase centre."""
     # Positions of sources around the circle.
     pos = numpy.array([0, 70, 135, 135.127, 200, 270, 135.-0.15], dtype='f8')
@@ -47,7 +47,7 @@ def source_ring(ra0_deg, dec0_deg, radius_deg=0.9):
     return ra0_deg + ra * 180.0 / math.pi, dec * 180.0 / math.pi
 
 
-def dict_to_ini(settings_dict, ini):
+def _dict_to_ini(settings_dict, ini):
     """Convert a dictionary of settings to and OSKAR settings ini file."""
     ini_dir = os.path.dirname(ini)
     if not ini_dir == "" and not os.path.isdir(ini_dir):
@@ -60,7 +60,7 @@ def dict_to_ini(settings_dict, ini):
                             key_, str(value_)])
 
 
-def run_interferometer(ini, verbose=True):
+def _run_interferometer(ini, verbose=True):
     """Run the OSKAR interferometer simulator."""
     if verbose:
         subprocess.call(["oskar_sim_interferometer", ini])
@@ -68,23 +68,37 @@ def run_interferometer(ini, verbose=True):
         subprocess.call(["oskar_sim_interferometer", "-q", ini])
 
 
-def create_settings(settings, settings_group_name='sim'):
+def _simulate(settings, over_sample=False, over_write=True, verbose=True):
     """Create simulation settings file."""
-    sim = settings[settings_group_name]
+    sim = settings['sim']
     obs = sim['observation']
     tel = sim['telescope']
 
-    ms_path = join(settings['path'], sim['output_ms'])
+    sky_file = join(settings['path'], sim['sky_file'])
+    if not os.path.isfile(sky_file):
+        # ra, dec = source_ring(obs['ra_deg'], obs['dec_deg'])
+        # stokes_i = numpy.ones(ra.shape)
+        # stokes_i[-1] = 0.5
+        # create_sky_model(sky_file, ra, dec, stokes_i)
+        _create_sky_model(sky_file, [obs['ra_deg']], [obs['dec_deg']+0.9], [1.0])
+
+    if over_sample:  # over-sampled or sub-sampled MS
+        dt_ave = obs['dt_s'] / obs['over_sample']
+        num_time_steps = obs['num_times'] * obs['over_sample']
+        ms_path = join(settings['path'], 'sub_sampled_' + sim['output_ms'])
+        ini_file = join(settings['path'], 'sub_sampled_' + sim['ini_file'])
+    else:  # Reference MS used for averaging.
+        dt_ave = obs['dt_s']
+        num_time_steps = obs['num_times']
+        ms_path = join(settings['path'], 'ref_' + sim['output_ms'])
+        ini_file = join(settings['path'], 'ref_' + sim['ini_file'])
+        sky_file = ''
+
+    if os.path.isdir(ms_path) and not over_write:
+        return
+
     if not os.path.isdir(os.path.dirname(ms_path)):
         os.mkdir(os.path.dirname(ms_path))
-
-    sky_file = join(settings['path'], sim['sky_file'])
-    if 'time_smearing' in sim and sim['time_smearing'] == False:
-        dt_ave = 0.0
-    else:
-        dt_ave = obs['dt_s']
-
-    print settings_group_name, dt_ave
 
     s = OrderedDict()
     s['simulator/'] = {
@@ -99,7 +113,7 @@ def create_settings(settings, settings_group_name='sim'):
         'num_channels': 1,
         'start_time_utc': obs['start_time_mjd'],
         'length': obs['num_times'] * obs['dt_s'],
-        'num_time_steps': obs['num_times'],
+        'num_time_steps': num_time_steps,
         'phase_centre_ra_deg': obs['ra_deg'],
         'phase_centre_dec_deg': obs['dec_deg']
     }
@@ -115,23 +129,12 @@ def create_settings(settings, settings_group_name='sim'):
         'channel_bandwidth_hz': obs['channel_bw_hz'],
         'ms_filename': ms_path
     }
-    ini_file = join(settings['path'], sim['ini_file'])
-    dict_to_ini(s, ini_file)
-    return s
+    _dict_to_ini(s, ini_file)
+    _run_interferometer(ini_file, verbose)
 
 
-def run(settings, verbose=True, settings_group_name='sim'):
+def run(settings, overwrite=True, verbose=True):
     """Run the OSKAR simulation."""
-    sim = settings[settings_group_name]
-    obs = sim['observation']
-    sky_file = join(settings['path'], sim['sky_file'])
-    # ra, dec = source_ring(obs['ra_deg'], obs['dec_deg'])
-    # stokes_i = numpy.ones(ra.shape)
-    # stokes_i[-1] = 0.5
-    # create_sky_model(sky_file, ra, dec, stokes_i)
-    create_sky_model(sky_file, [obs['ra_deg']], [obs['dec_deg']+0.9], [1.0])
-    create_settings(settings, settings_group_name)
-    ini_file = join(settings['path'], sim['ini_file'])
-    run_interferometer(ini_file, verbose)
-    return sim['output_ms']
+    _simulate(settings, over_sample=True, over_write=False, verbose=verbose)
+    _simulate(settings, over_sample=False, over_write=False, verbose=verbose)
 

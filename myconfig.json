@@ -1,8 +1,11 @@
 {
   "path": "TEMP",
-  "_steps": [ "sim", "corrupt", "bda", "calibrate", "image", "plot"],
-  "_steps": ["plot"],
-  "steps": [ "sim", "image", "plot"],
+
+  "ms_prefix":{
+    "bda": "bda_",
+    "sub_sampled": "sub_sampled_",
+    "reference": "ref_"
+  },
 
   "sim":
   {
@@ -22,8 +25,9 @@
       "freq_hz": 700.0e6,
       "channel_bw_hz": 0.0,
       "start_time_mjd": 57086.113194,
-      "dt_s": 0.02,
-      "num_times": 100
+      "dt_s": 0.1,
+      "num_times": 50,
+      "over_sample": 20
     }
   },
 
@@ -38,16 +42,23 @@
     "amplitude":
     {
       "std_t0": 0.005,
-      "hurst": 0.8,
+      "hurst": 0.75,
       "allan_var": 1.0e-4
     },
     "phase":
     {
-      "std_t0": 45.0,
+      "std_t0": 30.0,
       "hurst": 0.75,
-      "allan_var": 2.0
+      "allan_var": 0.5
     }
   },
+
+  "noise":
+  {
+
+  },
+
+
 
   "baseline_average":
   {
@@ -69,65 +80,29 @@
 
   "calibration":
   {
-    "method": "gaincal",
-    "plot_gains": true,
-    "input_ms":
-    [
-      "corrupted.ms",
-      "corrupted_bda.ms"
-    ],
-    "output_ms":
-    [
-      "calibrated.ms",
-      "calibrated_bda.ms"
-    ],
-    "gain_table":
-    [
-      "calibrated.gains",
-      "calibrated_bda.gains"
-    ]
+    "output_ms": "calibrated.ms",
+    "gain_table": "calibrated.ms"
   },
 
-  "imaging":
+    "imaging":
   {
     "overwrite": true,
-    "data":
-    [
-      ["model.ms", "DATA"],
-      ["corrupted.ms", "DATA"],
-      ["calibrated.ms", "CORRECTED_DATA"],
-      ["model_bda.ms", "DATA"],
-      ["corrupted_bda.ms", "DATA"],
-      ["calibrated_bda.ms", "CORRECTED_DATA"]
-    ],
+    "weighting": "uniform",
     "size": [512, 512],
     "fov_deg": [0.01, 0.01],
     "ra_deg": -90.35458487600000,
     "dec_deg": -7.67112399060000,
-    "w_planes": 0
+    "w_planes": 0,
+    "columns": {
+      "model": "DATA",
+      "corrupted": "DATA",
+      "calibrated": "CORRECTED_DATA"
+    }
   },
 
   "plotting":
   {
-    "model": "model_DATA_dirty.fits",
-    "corrupted": "corrupted_DATA_dirty.fits",
-    "calibrated": "calibrated_CORRECTED_DATA_dirty.fits",
-    "model_bda": "model_bda_DATA_dirty.fits",
-    "corrupted_bda": "corrupted_bda_DATA_dirty.fits",
-    "calibrated_bda": "calibrated_bda_CORRECTED_DATA_dirty.fits"
-  },
-
-  "__imaging":
-  {
-    "data":
-    [
-      ["model.ms", "DATA"],
-      ["calibrated.ms", "MODEL_DATA"]
-    ],
-    "size": [512, 512],
-    "fov_deg": [0.001, 0.001],
-    "ra_deg": -90.3545848760,
-    "dec_deg": -8.5711239906,
-    "w_planes": 0
+    "gains": "sub_sampled_corrupted.gains.pickle"
   }
 }
+
