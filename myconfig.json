@@ -4,7 +4,8 @@
   "ms_prefix":{
     "bda": "bda_",
     "sub_sampled": "sub_sampled_",
-    "reference": "ref_"
+    "reference": "ref_",
+    "expanded": "expanded_"
   },
 
   "sim":
@@ -58,33 +59,22 @@
 
   },
 
+  "calibration":
+  {
+    "output_ms": "calibrated.ms"
+  },
 
 
   "baseline_average":
   {
-    "input_ms":
-    [
-      "model.ms",
-      "corrupted.ms"
-    ],
-    "output_ms":
-    [
-      "model_bda.ms",
-      "corrupted_bda.ms"
-    ],
     "method": "mstransform",
-    "idt_max": 50,
+    "idt_max": 2,
     "max_fact": 1.002,
     "fov_radius_deg": 0.9
   },
 
-  "calibration":
-  {
-    "output_ms": "calibrated.ms",
-    "gain_table": "calibrated.ms"
-  },
 
-    "imaging":
+  "imaging":
   {
     "overwrite": true,
     "weighting": "uniform",

@@ -37,7 +37,7 @@ def _average_ms(ms_ref, ms_in, ms_out, num_baselines, num_times_average,
     num_times = num_rows / num_baselines
     num_blocks = num_times / num_times_average
     # TODO-BM: average CORRECTED_DATA AND MODEL_DATA columns as well..
-    print tb.colnames()
+
     col_data = tb.getcol('DATA')
     # col_uvw = tb.getcol('UVW')
     # col_ant1 = tb.getcol('ANTENNA1')
@@ -58,11 +58,39 @@ def _average_ms(ms_ref, ms_in, ms_out, num_baselines, num_times_average,
     assert col_data.shape[2] == num_rows
     ave_data = _average_column(numpy.squeeze(col_data), num_blocks,
                                num_times_average, num_baselines)
+    if 'MODEL_DATA' in tb.colnames():
+        print 'MODEL_DATA found in ', ms_in
+        col_model_data = tb.getcol('MODEL_DATA')
+        ave_model_data = _average_column(numpy.squeeze(col_model_data),
+                                         num_blocks, num_times_average,
+                                         num_baselines)
+    if 'CORRECTED_DATA' in tb.colnames():
+        print 'CORRECTED_DATA found in ', ms_in
+        col_corrected_data = tb.getcol('CORRECTED_DATA')
+        ave_corrected_data = _average_column(numpy.squeeze(col_corrected_data),
+                                             num_blocks, num_times_average,
+                                             num_baselines)
     tb.close()
     # --- Open the output MS and write averaged values.
     tb.open(ms_out, nomodify=False)
     col_data = tb.getcol('DATA')
     tb.putcol('DATA', numpy.reshape(ave_data, col_data.shape))
+    if not 'MODEL_DATA' in tb.colnames():
+        if not 'MODEL_DATA' in tb.colnames():
+            print '=>> Adding MODEL_DATA column to', ms_out
+            tb.close()
+            clearcal(vis=ms_out, addmodel=True)
+            tb.open(ms_out, nomodify=False)
+        tb.putcol('MODEL_DATA', numpy.reshape(ave_model_data,
+                                              col_data.shape))
+    if not 'CORRECTED_DATA' in tb.colnames():
+        if not 'CORRECTED_DATA' in tb.colnames():
+            print '=>> Adding CORRECTED_DATA column to', ms_out
+            tb.close()
+            clearcal(vis=ms_out, addmodel=True)
+            tb.open(ms_out, nomodify=False)
+        tb.putcol('CORRECTED_DATA', numpy.reshape(ave_corrected_data,
+                                                  col_data.shape))
     tb.close()
 
 
@@ -74,13 +102,14 @@ if __name__ == "__main__":
     num_antennas = _get_num_antennas(ms_ref)
     num_baselines = num_antennas * (num_antennas - 1) / 2
     num_times_average = settings['sim']['observation']['over_sample']
+    overwrite = False
 
     ms_in = join(sim_dir, 'sub_sampled_' + settings['sim']['output_ms'])
     ms_out = join(sim_dir, settings['sim']['output_ms'])
     _average_ms(ms_ref, ms_in, ms_out, num_baselines, num_times_average,
-                overwrite=False)
+                overwrite=overwrite)
 
     ms_in = join(sim_dir, 'sub_sampled_' + settings['corrupt']['output_ms'])
     ms_out = join(sim_dir, settings['corrupt']['output_ms'])
     _average_ms(ms_ref, ms_in, ms_out, num_baselines, num_times_average,
-                overwrite=False)
+                overwrite=overwrite)

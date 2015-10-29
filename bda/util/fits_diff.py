@@ -1,6 +1,11 @@
 #!venv/bin/python -u -O
 """Module to difference two FITS images."""
 
+import sys
+import os
+import numpy as np
+import pyfits
+
 
 def save_fits_image(filename, data, header, img1=None, img2=None):
     """Save a FITS image."""
@@ -28,17 +33,34 @@ def save_fits_image(filename, data, header, img1=None, img2=None):
 
 def load_fits_image(filename):
     """Load a FITS image."""
-    import pyfits
+
     hdulist = pyfits.open(filename)
     data = hdulist[0].data
     hdr = hdulist[0].header
     return np.squeeze(data), hdr
 
 
+def fits_diff(outname, file1, file2):
+    f1, h1 = load_fits_image(file1)
+    f2, h2 = load_fits_image(file2)
+    diff = f1 - f2
+    print '-' * 80
+    print '+ Image size  : %i x %i' % (f1.shape[0], f1.shape[1])
+    print '+ File 1      : %s' % file1
+    print '+ File 2      : %s' % file2
+    print '+ Diff        : file1 - file2'
+    print '+ Output name : %s' % (outname)
+    print '+ Diff stats:'
+    print '  - Max       : % .3e' % np.max(diff)
+    print '  - Min       : % .3e' % np.min(diff)
+    print '  - Mean      : % .3e' % np.mean(diff)
+    print '  - STD       : % .3e' % np.std(diff)
+    print '  - RMS       : % .3e' % np.sqrt(np.mean(diff**2))
+    print '-' * 80
+    save_fits_image(outname, diff, h1, file1, file2)
+
+
 if __name__ == '__main__':
-    import sys
-    import os
-    import numpy as np
 
     if len(sys.argv) - 1 != 3:
         print 'Usage: fits_diff.py <diff name> <file1> <file2>'

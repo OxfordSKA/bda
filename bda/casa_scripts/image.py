@@ -92,8 +92,8 @@ if __name__ == "__main__":
     if settings.has_key('imaging'):
         settings = settings['imaging']
         column_spec = settings['columns']
-        for file in ms_files:
-            ms = join(sim_dir, file)
+        for f in ms_files:
+            ms = join(sim_dir, f)
             column = 'DATA'
             for k in column_spec.keys():
                 if k in ms:

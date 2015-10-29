@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ["util", "simulate", "corrupt"]
+__all__ = ["fits_diff"]

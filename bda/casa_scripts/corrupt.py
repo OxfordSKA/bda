@@ -183,17 +183,17 @@ def main(config_file):
     print ''
 
     t0 = time.time()
-    print '+ Creating calibration table ...'
+    print '+ Creating calibration table for corruptions ...'
     create_empty_caltable(ms_out, cal_table, num_times)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
-    print '+ Filling calibration table'
+    print '+ Filling calibration table with corruptions ...'
     fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
-    print '+ Applying calibration ...'
+    print '+ Applying corruptions ...'
     run_applycal(ms_out, cal_table)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
