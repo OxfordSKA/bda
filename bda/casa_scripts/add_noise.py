@@ -44,6 +44,10 @@ def _main():
     ms_out_2 = join(sim_dir, '%s_%s.ms' % (settings['ms_name']['model'],
                                            settings['ms_modifier']['reference']))
     print 'Adding noise (%f Jy STD) to: %s...' % (noise_std, ms_out_2)
+    print numpy.std(noise)
+    print numpy.std(noise.real)
+    print numpy.std(noise.imag)
+    print noise.shape
     tb.open(ms_out_2, nomodify=False)
     tb.putcol('DATA', noise.reshape(1, 1, num_rows))
     tb.close()

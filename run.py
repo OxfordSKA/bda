@@ -33,14 +33,13 @@ if __name__ == '__main__':
     # Spawn a CASA process to work with.
     casa = drivecasa.Casapy(working_dir=os.path.curdir,
                             casa_logfile=False,
-                            echo_to_stdout=True)
+                            echo_to_stdout=True,
+                            timeout=None)
     # Add config_file variable to the CASA variable list.
     casa.run_script(["config_file = '{}'".format(args.config)])
 
     # Top level simulation output directory.
     sim_dir = settings['path']
-
-    # TODO-BM implement ms_prefix settings everywhere ...
 
     # Create a copy of the settings file.
     if not os.path.isdir(sim_dir):
@@ -79,47 +78,56 @@ if __name__ == '__main__':
     casa.run_script_from_file('bda/casa_scripts/baseline_average.py')
 
     # Image.
-    # TODO-BM: also image away from the source at the phase centre.
     casa.run_script_from_file('bda/casa_scripts/image.py')
 
     # # Make some difference fits images.
+    weight = 'u'
+    idx = 0
     fits_diff.fits_diff(join(sim_dir, 'diff_cal_model.fits'),
-                        join(sim_dir, 'calibrated_CORRECTED_DATA.fits'),
-                        join(sim_dir, 'calibrated_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_noisy_cal_model.fits'),
-                        join(sim_dir, 'calibrated_noisy_CORRECTED_DATA.fits'),
-                        join(sim_dir, 'calibrated_noisy_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_noisy_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_noisy_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_bda_cal_model.fits'),
-                        join(sim_dir, 'calibrated_bda_CORRECTED_DATA.fits'),
-                        join(sim_dir, 'calibrated_bda_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_bda_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_bda_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_noisy_bda_cal_model.fits'),
-                        join(sim_dir, 'calibrated_noisy_bda_CORRECTED_DATA.fits'),
-                        join(sim_dir, 'calibrated_noisy_bda_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_noisy_bda_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_noisy_bda_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_bda_expanded_cal_model.fits'),
-                        join(sim_dir,
-                             'calibrated_bda_expanded_CORRECTED_DATA.fits'),
-                        join(sim_dir,
-                             'calibrated_bda_expanded_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_bda_expanded_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_bda_expanded_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_noisy_bda_expanded_cal_model.fits'),
-                        join(sim_dir,
-                             'calibrated_noisy_bda_expanded_CORRECTED_DATA.fits'),
-                        join(sim_dir,
-                             'calibrated_noisy_bda_expanded_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_noisy_bda_expanded_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_noisy_bda_expanded_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_bda_expanded_bda_cal_model.fits'),
-                        join(sim_dir,
-                             'calibrated_bda_expanded_bda_CORRECTED_DATA.fits'),
-                        join(sim_dir,
-                             'calibrated_bda_expanded_bda_MODEL_DATA.fits'))
+                        join(sim_dir, 'calibrated_bda_expanded_bda_'
+                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'calibrated_bda_expanded_bda_'
+                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
 
     fits_diff.fits_diff(join(sim_dir, 'diff_corrupted_noise.fits'),
-                        join(sim_dir, 'corrupted_DATA.fits'),
-                        join(sim_dir, 'corrupted_noisy_DATA.fits'))
+                        join(sim_dir, 'corrupted_DATA_%i_%s.fits' % (idx, weight)),
+                        join(sim_dir, 'corrupted_noisy_DATA_%i_%s.fits' % (idx, weight)))
 
     # TODO-BM: Plot results fits images / diffs.
     # plot.run(settings)

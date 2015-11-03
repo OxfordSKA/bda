@@ -34,8 +34,8 @@
       "channel_bw_hz": 10.7e3,
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
-      "num_times": 50,
-      "over_sample": 10
+      "num_times": 20,
+      "over_sample": 50
     }
   },
 
@@ -63,7 +63,7 @@
   {
     "seed": 1,
     "__noise_rms_jy": 10.0,
-    "noise_rms_jy": 1.0
+    "noise_rms_jy": 0.2
   },
 
   "calibration":
@@ -85,12 +85,27 @@
   "imaging":
   {
     "overwrite": true,
-    "weighting": "uniform",
-    "size": [512, 512],
-    "fov_deg": [0.01, 0.01],
-    "ra_deg": -90.35458487600000,
-    "dec_deg": -7.67112399060000,
-    "w_planes": 0,
+    "__comment": "array of dictionaries defining images to make",
+    "images": [
+      {
+        "__comment": "image in direction of source",
+        "weighting": "uniform",
+        "size": [512, 512],
+        "fov_deg": [0.025, 0.025],
+        "ra_deg": -90.35458487600000,
+        "dec_deg": -7.67112399060000,
+        "w_planes": 0
+      },
+      {
+        "__comment": "image in direction of phase centre",
+        "weighting": "uniform",
+        "size": [512, 512],
+        "fov_deg": [0.025, 0.025],
+        "ra_deg": -90.3545848760,
+        "dec_deg": -8.5711239906,
+        "w_planes": 0
+      }
+    ],
     "columns": {
       "model": ["DATA"],
       "corrupted": ["DATA"],
