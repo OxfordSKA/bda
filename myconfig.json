@@ -63,7 +63,7 @@
   {
     "seed": 1,
     "__noise_rms_jy": 10.0,
-    "noise_rms_jy": 0.2
+    "noise_rms_jy": 0.5
   },
 
   "calibration":
