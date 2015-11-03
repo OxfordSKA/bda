@@ -40,6 +40,12 @@ def _main():
     tb.putcol('CORRECTED_DATA', col_data)
     tb.close()
 
+    ms_out_2 = join(sim_dir, '%s_%s.ms' % (settings['ms_name']['model'],
+                                           settings['ms_modifier']['reference']))
+    tb.open(ms_out_2, nomodify=False)
+    tb.putcol('DATA', noise)
+    tb.close()
+
 
 if __name__ == '__main__':
     _main()

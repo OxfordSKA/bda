@@ -35,7 +35,7 @@
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
       "num_times": 50,
-      "over_sample": 20
+      "over_sample": 10
     }
   },
 
@@ -47,15 +47,15 @@
     "plot_gains": true,
     "amplitude":
     {
-      "std_t0": 0.01,
+      "std_t0": 0.005,
       "hurst": 0.8,
       "allan_var": 1.0e-4
     },
     "phase":
     {
-      "std_t0": 45.0,
-      "hurst": 0.75,
-      "allan_var": 1.0
+      "std_t0": 20.0,
+      "hurst": 0.8,
+      "allan_var": 0.5
     }
   },
 
@@ -76,8 +76,8 @@
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 5,
-    "max_fact": 1.001,
+    "idt_max": 20,
+    "max_fact": 1.002,
     "fov_radius_deg": 0.9
   },
 

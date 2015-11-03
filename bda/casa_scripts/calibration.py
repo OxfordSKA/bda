@@ -64,7 +64,7 @@ if __name__ == "__main__":
             continue
 
         print '=' * 80
-        print '[%02i/%02i]' % (i, len(ms_names))
+        print '[%02i/%02i]' % (i + 1, len(ms_names))
         print 'Calibrating:', ms_in
         print '        -->:', ms_out
 
