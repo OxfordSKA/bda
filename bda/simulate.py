@@ -75,24 +75,28 @@ def _simulate(settings, over_sample=False, over_write=True, verbose=True):
     tel = sim['telescope']
 
     sky_file = join(settings['path'], sim['sky_file'])
+    ms_name = settings['ms_name']['model']
+
     if not os.path.isfile(sky_file):
         # ra, dec = source_ring(obs['ra_deg'], obs['dec_deg'])
         # stokes_i = numpy.ones(ra.shape)
         # stokes_i[-1] = 0.5
         # create_sky_model(sky_file, ra, dec, stokes_i)
-        _create_sky_model(sky_file, [obs['ra_deg']], [obs['dec_deg']+0.9], [1.0])
+        _create_sky_model(sky_file, [obs['ra_deg']], [obs['dec_deg']+0.9],
+                          [1.0])
 
     if over_sample:  # over-sampled or sub-sampled MS
         dt_ave = obs['dt_s'] / obs['over_sample']
         num_time_steps = obs['num_times'] * obs['over_sample']
-        ms_path = join(settings['path'], 'sub_sampled_' + sim['output_ms'])
-        ini_file = join(settings['path'], 'sub_sampled_' + sim['ini_file'])
+        suffix = settings['ms_modifier']['sub_sampled']
     else:  # Reference MS used for averaging.
         dt_ave = obs['dt_s']
         num_time_steps = obs['num_times']
-        ms_path = join(settings['path'], 'ref_' + sim['output_ms'])
-        ini_file = join(settings['path'], 'ref_' + sim['ini_file'])
+        suffix = settings['ms_modifier']['reference']
         sky_file = ''
+
+    ms_path = join(settings['path'], '%s_%s.ms' % (ms_name, suffix))
+    ini_file = join(settings['path'], '%s_%s.ini' % (ms_name, suffix))
 
     if os.path.isdir(ms_path) and not over_write:
         return

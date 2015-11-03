@@ -81,32 +81,38 @@ if __name__ == "__main__":
     fov_radius = bda_settings['fov_radius_deg']
     # -------------------------------------------------------------------------
 
-    ms_files = [f for f in os.listdir(os.path.abspath(sim_dir))
-                if f.endswith('.ms') and os.path.isdir(join(sim_dir, f))]
-    for ms in ms_files:
-        # TODO-BM: replace exclusion filters with list of constructed ms names?
-        # Exclude reference and sub-sampled data from the BDA stage
-        if settings['ms_prefix']['sub_sampled'] in ms or \
-                        settings['ms_prefix']['reference'] in ms or \
-                        settings['ms_prefix']['bda'] in ms:
-            continue
-        # Exclude the calibrated default sampled ms from the BDA
-        if ms == settings['calibration']['output_ms']:
-            continue
-        # Exclude the corrupted expanded MS from the BDA
-        if settings['ms_prefix']['expanded'] in ms and \
-                        settings['corrupt']['output_ms'] in ms:
-            continue
-        ms_in = join(sim_dir, ms)
-        ms_out = join(sim_dir, settings['ms_prefix']['bda'] + ms)
+    # model.ms -> model_bda.ms
+    # corrupted.ms -> corrupted_bda.ms
+    # corrupted_noisy.ms -> corrupted_noisy_bda.ms
+
+    # calibrated_bda_expanded.ms -> calibrated_bda_expanded_bda.ms
+    # calibrated_noisy_bda_expanded -> calibrated_noisy_bda_expanded_bda.ms
+
+    ms_names = ['%s' % settings['ms_name']['model'],
+                '%s' % settings['ms_name']['corrupted'],
+                '%s_%s' % (settings['ms_name']['corrupted'],
+                           settings['ms_modifier']['noisy']),
+                '%s_%s_%s' % (settings['ms_name']['calibrated'],
+                              settings['ms_modifier']['bda'],
+                              settings['ms_modifier']['expanded']),
+                '%s_%s_%s_%s' % (settings['ms_name']['calibrated'],
+                                 settings['ms_modifier']['noisy'],
+                                 settings['ms_modifier']['bda'],
+                                 settings['ms_modifier']['expanded']),
+                ]
+    bda_suffix = settings['ms_modifier']['bda']
+
+    for ms in ms_names:
+        ms_in = join(sim_dir, '%s.ms' % ms)
+        ms_out = join(sim_dir, '%s_%s.ms' % (ms, bda_suffix))
         if os.path.isdir(ms_out):
             continue
-
         if os.path.isdir(ms_in):
             _, _, _, dt = get_time_info(ms_in)
             dt_max = '%.5fs' % (idt_max * dt)
             print '-' * 60
             print '+ %s' % ms_in
+            print '+ %s' % ms_out
             print '+ dt                  :', dt
             print '+ dt_max              :', dt_max
             print '-' * 60

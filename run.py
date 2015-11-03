@@ -7,7 +7,7 @@ import argparse
 from os.path import join
 from shutil import copyfile
 import drivecasa
-from bda import simulate, plot
+from bda import simulate, plot_gains
 from bda.util import fits_diff
 
 if __name__ == '__main__':
@@ -53,76 +53,73 @@ if __name__ == '__main__':
     # Introduce gain corruptions to the sub-sampled simulation.
     casa.run_script_from_file('bda/casa_scripts/corrupt.py')
 
-    # Average sub-sampled model and corrupted model.
+    # Plot results.
+    plot_gains.run(settings)
+
+    # Average sub-sampled model and corrupted model to default interval.
     casa.run_script_from_file('bda/casa_scripts/average_ms.py')
 
-    # TODO-BM add thermal noise.
+    # Add thermal noise.
+    # TODO-BM: for noise to work well we have to image a longer data set ...
+    # the calibration error due to noise should be gaussian so should go away?
+    # Otherwise have to play with the calibration interval in gaincal...?
+    casa.run_script_from_file('bda/casa_scripts/add_noise.py')
 
     # Baseline dependent averaging.
-    # TODO-BM differnet BDA schemes
+    # TODO-BM different BDA schemes
     casa.run_script_from_file('bda/casa_scripts/baseline_average.py')
-
-    # SEND TO SDP
 
     # Expand the BDA MS back to to non-BDA sampling/
     casa.run_script_from_file('bda/casa_scripts/expand_bda_ms.py')
 
-    # Calibration. TODO-BM calibrate the BDA and expanded BDA MS
+    # Calibration.
     casa.run_script_from_file('bda/casa_scripts/calibration.py')
 
     # Re-compress the BDA MS
     casa.run_script_from_file('bda/casa_scripts/baseline_average.py')
 
-    # Image. TODO-BM also image at the phase centre!
+    # Image.
+    # TODO-BM: also image away from the source at the phase centre.
     casa.run_script_from_file('bda/casa_scripts/image.py')
 
     # # Make some difference fits images.
-    # fits_diff.fits_diff('TEMP/diff_bda_cal_model.fits',
-    #                     'TEMP/bda_calibrated.fits',
-    #                     'TEMP/bda_model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_cal_model.fits',
-    #                     'TEMP/calibrated.fits',
-    #                     'TEMP/model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_sub_sampled_cal_model.fits',
-    #                     'TEMP/sub_sampled_calibrated.fits',
-    #                     'TEMP/sub_sampled_model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_model_sub_model.fits',
-    #                     'TEMP/model.fits',
-    #                     'TEMP/sub_sampled_model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_bda_model_model.fits',
-    #                     'TEMP/bda_model.fits',
-    #                     'TEMP/model.fits')
-    #
-    # # Make some difference fits images.
-    # fits_diff.fits_diff('TEMP/diff_bda_cal_model.fits',
-    #                     'TEMP/bda_calibrated.fits',
-    #                     'TEMP/bda_model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_cal_model.fits',
-    #                     'TEMP/calibrated.fits',
-    #                     'TEMP/model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_sub_sampled_cal_model.fits',
-    #                     'TEMP/sub_sampled_calibrated.fits',
-    #                     'TEMP/sub_sampled_model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_model_sub_model.fits',
-    #                     'TEMP/model.fits',
-    #                     'TEMP/sub_sampled_model.fits')
-    #
-    # fits_diff.fits_diff('TEMP/diff_bda_model_model.fits',
-    #                     'TEMP/bda_model.fits',
-    #                     'TEMP/model.fits')
+    fits_diff.fits_diff(join(sim_dir, 'diff_cal_model.fits'),
+                        join(sim_dir, 'calibrated_CORRECTED_DATA.fits'),
+                        join(sim_dir, 'calibrated_MODEL_DATA.fits'))
 
-    fits_diff.fits_diff('TEMP/diff_expanded_bda_cal_model.fits',
-                        'TEMP/bda_expanded_calibrated.fits',
-                        'TEMP/bda_model.fits')
+    fits_diff.fits_diff(join(sim_dir, 'diff_noisy_cal_model.fits'),
+                        join(sim_dir, 'calibrated_noisy_CORRECTED_DATA.fits'),
+                        join(sim_dir, 'calibrated_noisy_MODEL_DATA.fits'))
 
+    fits_diff.fits_diff(join(sim_dir, 'diff_bda_cal_model.fits'),
+                        join(sim_dir, 'calibrated_bda_CORRECTED_DATA.fits'),
+                        join(sim_dir, 'calibrated_bda_MODEL_DATA.fits'))
 
-    # Plot results.
-    plot.run(settings)
+    fits_diff.fits_diff(join(sim_dir, 'diff_noisy_bda_cal_model.fits'),
+                        join(sim_dir, 'calibrated_noisy_bda_CORRECTED_DATA.fits'),
+                        join(sim_dir, 'calibrated_noisy_bda_MODEL_DATA.fits'))
 
+    fits_diff.fits_diff(join(sim_dir, 'diff_bda_expanded_cal_model.fits'),
+                        join(sim_dir,
+                             'calibrated_bda_expanded_CORRECTED_DATA.fits'),
+                        join(sim_dir,
+                             'calibrated_bda_expanded_MODEL_DATA.fits'))
+
+    fits_diff.fits_diff(join(sim_dir, 'diff_noisy_bda_expanded_cal_model.fits'),
+                        join(sim_dir,
+                             'calibrated_noisy_bda_expanded_CORRECTED_DATA.fits'),
+                        join(sim_dir,
+                             'calibrated_noisy_bda_expanded_MODEL_DATA.fits'))
+
+    fits_diff.fits_diff(join(sim_dir, 'diff_bda_expanded_bda_cal_model.fits'),
+                        join(sim_dir,
+                             'calibrated_bda_expanded_bda_CORRECTED_DATA.fits'),
+                        join(sim_dir,
+                             'calibrated_bda_expanded_bda_MODEL_DATA.fits'))
+
+    fits_diff.fits_diff(join(sim_dir, 'diff_corrupted_noise.fits'),
+                        join(sim_dir, 'corrupted_DATA.fits'),
+                        join(sim_dir, 'corrupted_noisy_DATA.fits'))
+
+    # TODO-BM: Plot results fits images / diffs.
+    # plot.run(settings)

@@ -66,7 +66,7 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
     print 'obs. length = %f' % ((time_range[1] - time_range[0]) + dt)
     print '-' * 60
 
-    out_dir = os.path.dirname(cal_table)
+
     all_gains = {}
     all_gains[0] = numpy.ones((num_times,), dtype='c16')
     tb.open(cal_table, nomodify=False)
@@ -93,8 +93,7 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
             tb.putcell('CPARAM', row, gain)
             tb.putcell('TIME', row, time_range[0] + t * dt)
 
-    gains_pickle = join(out_dir, 'sub_sampled_' + settings['gain_table'] +
-                        '.pickle')
+    gains_pickle = '%s.pickle' % cal_table
     pickle.dump(all_gains, open(gains_pickle, 'w'))
 
     tb.close()
@@ -135,18 +134,22 @@ def copy_column(ms, src_col, dst_col):
 
 
 def main(config_file):
-    """."""
     tAll = time.time()
 
     settings = utilities.byteify(json.load(open(config_file)))
     sim_dir = settings['path']
-    settings = settings['corrupt']
 
-    # ---------------------------------------------------
-    ms_in = join(sim_dir, 'sub_sampled_' + settings['input_ms'])
-    ms_out = join(sim_dir, 'sub_sampled_' + settings['output_ms'])
-    cal_table = join(sim_dir, 'sub_sampled_' + settings['gain_table'])
-    # ---------------------------------------------------
+    # -------------------------------------------------------------------------
+    ms_in = join(sim_dir, '%s_%s.ms' %
+                 (settings['ms_name']['model'],
+                  settings['ms_modifier']['sub_sampled']))
+    ms_out = join(sim_dir, '%s_%s.ms' %
+                  (settings['ms_name']['corrupted'],
+                   settings['ms_modifier']['sub_sampled']))
+    cal_table = join(sim_dir, '%s_%s.gains' %
+                     (settings['ms_name']['corrupted'],
+                      settings['ms_modifier']['sub_sampled']))
+    # -------------------------------------------------------------------------
 
     if os.path.isdir(ms_out):
         return
@@ -189,7 +192,7 @@ def main(config_file):
 
     t0 = time.time()
     print '+ Filling calibration table with corruptions ...'
-    fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt)
+    fill_caltable(settings['corrupt'], cal_table, num_stations, num_times, time_range, dt)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
@@ -202,7 +205,6 @@ def main(config_file):
     copy_column(ms_out, 'CORRECTED_DATA', 'DATA')
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
-    # TODO(BM) add white noise (do this before/ after applying gain errors?!)
     print '+ Applying corruptions took %.3f seconds' % (time.time() - tAll)
 
 

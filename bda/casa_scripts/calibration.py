@@ -33,39 +33,47 @@ if __name__ == "__main__":
     overwrite = False
     # -------------------------------------------------------------------------
 
-    ms_files = [f for f in os.listdir(os.path.abspath(sim_dir))
-                if f.endswith('.ms') and os.path.isdir(join(sim_dir, f))]
+    # corrupted.ms
+    # corrupted_bda.ms
+    # corrupted_bda_expanded.ms
+    # corrupted_noisy.ms
+    # corrupted_noisy_bda.ms
+    # corrupted_noisy_bda_expanded.ms
+    # corrupted_sub_sampled.ms
 
-    for ms in ms_files:
-        if settings['corrupt']['output_ms'] in ms:
-            ms_in = join(sim_dir, ms)
-            prefix = ''
-            for key in settings['ms_prefix']:
-                if settings['ms_prefix'][key] in ms:
-                    prefix = settings['ms_prefix'][key]
-            # if prefix == settings['ms_prefix']['sub_sampled']:
-            #     continue
-            cal_table = join(sim_dir,
-                             prefix + settings['calibration']['output_ms'] +
-                             '.gains')
-            ms_out = join(sim_dir, prefix +
-                          settings['calibration']['output_ms'])
-            if not overwrite and os.path.isdir(ms_out):
-                continue
-            if os.path.isdir(ms_out):
-                shutil.rmtree(ms_out)
-            if os.path.isdir(cal_table):
-                shutil.rmtree(cal_table)
-            shutil.copytree(ms_in, ms_out)
-            print 'Calibrating:', ms_in
-            print '  cal table:', cal_table
-            t0 = time.time()
-            run_gaincal(ms_out, cal_table)
-            print '*' * 80
-            print '+ Gaincal completed in %.3fs' % (time.time() - t0)
-            print '*' * 80
-            t0 = time.time()
-            run_applycal(ms_out, cal_table)
-            print '*' * 80
-            print '+ Applycal completed in %.3fs' % (time.time() - t0)
-            print '*' * 80
+    corrupted_root = settings['ms_name']['corrupted']
+    calibrated_root = settings['ms_name']['calibrated']
+    suffix = settings['ms_modifier']
+    ms_names = [
+        '',
+        '_%s' % (suffix['bda']),
+        '_%s_%s' % (suffix['bda'], suffix['expanded']),
+        '_%s' % (suffix['noisy']),
+        '_%s_%s' % (suffix['noisy'], suffix['bda']),
+        '_%s_%s_%s' % (suffix['noisy'], suffix['bda'], suffix['expanded']),
+        '_%s' % (suffix['sub_sampled'])
+    ]
+
+    for i, ms in enumerate(ms_names):
+
+        ms_in = join(sim_dir, '%s%s.ms' % (corrupted_root, ms))
+        ms_out = join(sim_dir, '%s%s.ms' % (calibrated_root, ms))
+        cal_table = join(sim_dir, '%s%s.gains' % (calibrated_root, ms))
+
+        if os.path.isdir(ms_out):
+            continue
+
+        print '=' * 80
+        print '[%02i/%02i]' % (i, len(ms_names))
+        print 'Calibrating:', ms_in
+        print '        -->:', ms_out
+
+        shutil.copytree(ms_in, ms_out)
+
+        t0 = time.time()
+        run_gaincal(ms_out, cal_table)
+        print '- Gaincal completed in %.3fs' % (time.time() - t0)
+
+        t0 = time.time()
+        run_applycal(ms_out, cal_table)
+        print '- Applycal completed in %.3fs' % (time.time() - t0)

@@ -23,6 +23,13 @@ def save_fits_image(filename, data, header, img1=None, img2=None):
         new_hdr.append(('HISTORY', '- image1 : %s' % img1))
         new_hdr.append(('HISTORY', '- image2 : %s' % img2))
         new_hdr.append(('HISTORY', '-' * 60))
+        new_hdr.append(('HISTORY', '  - Max       : % .3e' % np.max(data)))
+        new_hdr.append(('HISTORY', '  - Min       : % .3e' % np.min(data)))
+        new_hdr.append(('HISTORY', '  - Mean      : % .3e' % np.mean(data)))
+        new_hdr.append(('HISTORY', '  - STD       : % .3e' % np.std(data)))
+        new_hdr.append(('HISTORY', '  - RMS       : % .3e' %
+                        np.sqrt(np.mean(data**2))))
+        new_hdr.append(('HISTORY', '-' * 60))
         new_hdr.append(('HISTORY', '' * 60))
 
     if (os.path.exists(filename)):
@@ -41,6 +48,15 @@ def load_fits_image(filename):
 
 
 def fits_diff(outname, file1, file2):
+    if not os.path.exists(file1):
+        print 'ERROR: missing input file', file1
+        return
+    if not os.path.exists(file2):
+        print 'ERROR: missing input file', file2
+        return
+    if os.path.exists(outname):
+        return
+
     f1, h1 = load_fits_image(file1)
     f2, h2 = load_fits_image(file2)
     diff = f1 - f2

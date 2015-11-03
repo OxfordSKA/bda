@@ -81,37 +81,36 @@ def casa_image(ms, rootname, data_column, imsize, fov, ra0, dec0,
     #     shutil.rmtree(psf)
 
 
-if __name__ == "__main__":
-
+def _run():
     settings = utilities.byteify(json.load(open(config_file)))
+
+    if not settings.has_key('imaging'):
+        return
 
     sim_dir = settings['path']
     ms_files = [f for f in os.listdir(os.path.abspath(sim_dir))
                 if f.endswith('.ms') and os.path.isdir(join(sim_dir, f))]
 
-    if settings.has_key('imaging'):
-        settings = settings['imaging']
-        column_spec = settings['columns']
-        for f in ms_files:
-            ms = join(sim_dir, f)
-            column = 'DATA'
-            for k in column_spec.keys():
-                if k in ms:
-                    column = column_spec[k]
-            if not os.path.isdir(ms):
-                print 'WARNING: MS not found, skipping imaging. (%s)' % ms
-                continue
-            root_name = os.path.splitext(ms)[0]
-            if os.path.exists('{}.fits'.format(root_name)):
-                continue
-            print '+ Imaging with CASA ... [ms=%s -> %s : %s]' % (ms, root_name,
-                                                                  column)
-            t0 = time.time()
-            casa_image(ms, '{}'.format(root_name), column,
-                       settings['size'], settings['fov_deg'],
-                       settings['ra_deg'], settings['dec_deg'],
-                       settings['weighting'], settings['w_planes'])
-            print '*' * 80
-            print '  - Finished imaging in %.3fs' % (time.time() - t0)
-            print '*' * 80
+    settings = settings['imaging']
+    column_spec = settings['columns']
+    for f in ms_files:
+        ms = join(sim_dir, f)
+        for k in column_spec.keys():
+            if k in ms:
+                columns = column_spec[k]
+                for column in columns:
+                    root_name = os.path.splitext(ms)[0] + '_{}'.format(column)
+                    if os.path.exists('{}.fits'.format(root_name)):
+                        continue
+                    print '+ Imaging: %s [%s]' % (ms, column)
+                    t0 = time.time()
+                    casa_image(ms, '{}'.format(root_name), column,
+                               settings['size'], settings['fov_deg'],
+                               settings['ra_deg'], settings['dec_deg'],
+                               settings['weighting'], settings['w_planes'])
+                    print '*' * 80
+                    print '  - Finished imaging in %.3fs' % (time.time() - t0)
+                    print '*' * 80
 
+if __name__ == '__main__':
+    _run()

@@ -1,17 +1,22 @@
 {
-  "path": "TEMP",
+  "path": "TEMP6",
 
-  "ms_prefix":{
-    "bda": "bda_",
-    "sub_sampled": "sub_sampled_",
-    "reference": "ref_",
-    "expanded": "expanded_"
+  "ms_name": {
+    "model": "model",
+    "corrupted": "corrupted",
+    "calibrated": "calibrated"
+  },
+
+  "ms_modifier":{
+    "reference": "ref",
+    "sub_sampled": "sub_sampled",
+    "noisy": "noisy",
+    "bda": "bda",
+    "expanded": "expanded"
   },
 
   "sim":
   {
-    "output_ms": "model.ms",
-    "ini_file": "test.ini",
     "sky_file": "sky.osm",
     "telescope":
     {
@@ -24,7 +29,9 @@
       "ra_deg": -90.3545848760,
       "dec_deg": -8.5711239906,
       "freq_hz": 700.0e6,
-      "channel_bw_hz": 0.0,
+      "__channel_bw_hz": 0.0,
+      "__comment": "65536 channels over 700e6 Hz band",
+      "channel_bw_hz": 10.7e3,
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
       "num_times": 50,
@@ -34,42 +41,43 @@
 
   "corrupt":
   {
-    "input_ms": "model.ms",
-    "output_ms": "corrupted.ms",
-    "gain_table": "corrupted.gains",
+    "gain_table": "corrupted",
     "tau_s": 1.0,
     "seed": 666,
     "plot_gains": true,
     "amplitude":
     {
-      "std_t0": 0.005,
-      "hurst": 0.75,
+      "std_t0": 0.01,
+      "hurst": 0.8,
       "allan_var": 1.0e-4
     },
     "phase":
     {
-      "std_t0": 30.0,
+      "std_t0": 45.0,
       "hurst": 0.75,
-      "allan_var": 0.5
+      "allan_var": 1.0
     }
   },
 
   "noise":
   {
-
+    "seed": 1,
+    "__noise_rms_jy": 10.0,
+    "noise_rms_jy": 1.0
   },
 
   "calibration":
   {
-    "output_ms": "calibrated.ms"
+    "output_ms": "calibrated",
+    "interval": 1.0
   },
 
 
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 2,
-    "max_fact": 1.002,
+    "idt_max": 5,
+    "max_fact": 1.001,
     "fov_radius_deg": 0.9
   },
 
@@ -84,9 +92,9 @@
     "dec_deg": -7.67112399060000,
     "w_planes": 0,
     "columns": {
-      "model": "DATA",
-      "corrupted": "DATA",
-      "calibrated": "CORRECTED_DATA"
+      "model": ["DATA"],
+      "corrupted": ["DATA"],
+      "calibrated": ["DATA", "CORRECTED_DATA", "MODEL_DATA"]
     }
   },
 
@@ -94,5 +102,7 @@
   {
     "gains": "sub_sampled_corrupted.gains.pickle"
   }
+
 }
+
 
