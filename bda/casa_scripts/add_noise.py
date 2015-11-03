@@ -45,10 +45,7 @@ def _main():
                                            settings['ms_modifier']['reference']))
     print 'Adding noise (%f Jy STD) to: %s...' % (noise_std, ms_out_2)
     tb.open(ms_out_2, nomodify=False)
-    print tb.getcol('DATA').shape
-    print num_rows
-    print noise.shape
-    # tb.putcol('DATA', noise.reshape(1, 1, num_rows))
+    tb.putcol('DATA', noise.reshape(1, 1, num_rows))
     tb.close()
 
 
