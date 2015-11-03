@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # corrupted_noisy.ms
     # corrupted_noisy_bda.ms
     # corrupted_noisy_bda_expanded.ms
-    # corrupted_sub_sampled.ms
+    # (SLOW) corrupted_sub_sampled.ms
 
     corrupted_root = settings['ms_name']['corrupted']
     calibrated_root = settings['ms_name']['calibrated']
@@ -50,8 +50,8 @@ if __name__ == "__main__":
         '_%s_%s' % (suffix['bda'], suffix['expanded']),
         '_%s' % (suffix['noisy']),
         '_%s_%s' % (suffix['noisy'], suffix['bda']),
-        '_%s_%s_%s' % (suffix['noisy'], suffix['bda'], suffix['expanded']),
-        '_%s' % (suffix['sub_sampled'])
+        '_%s_%s_%s' % (suffix['noisy'], suffix['bda'], suffix['expanded'])
+        #'_%s' % (suffix['sub_sampled'])
     ]
 
     for i, ms in enumerate(ms_names):
