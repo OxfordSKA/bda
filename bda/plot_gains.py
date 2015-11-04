@@ -139,9 +139,66 @@ def _plot_zoom_1(gains, settings, antenna, plot_name):
     plt.savefig(join(sim_dir, plot_name), dpi=300)
 
 
+def _plot_adev(gains, settings):
+    sim_dir = settings['path']
+    fig, axes2d = plt.subplots(nrows=2, sharex=True, figsize=(6.5, 5.0))
+    fig.subplots_adjust(left=0.15, bottom=0.10, right=0.97, top=0.95,
+                        hspace=0.22, wspace=0.0)
+    dt = (settings['sim']['observation']['dt_s'] /
+          settings['sim']['observation']['over_sample'])
+    num_times = len(gains[0])
+    x = numpy.arange(num_times) * dt
+    antennas = range(1, len(gains))
+    tau_ = numpy.arange(5, num_times / 3, 5) * dt
+    shape = (len(antennas), tau_.shape[0])
+    amp_allan_dev = numpy.empty(shape=shape, dtype='f8')
+    amp_allan_dev_error = numpy.empty(shape=shape, dtype='f8')
+    phase_allan_dev = numpy.empty(shape=shape, dtype='f8')
+    phase_allan_dev_error = numpy.empty(shape=shape, dtype='f8')
+    for ia, a in enumerate(antennas):
+        for i, t in enumerate(tau_):
+            adev_, adev_err_, _ = adev(numpy.abs(gains[a]), dt, t)
+            amp_allan_dev[ia, i] = adev_
+            amp_allan_dev_error[ia, i] = adev_err_
+            adev_, adev_err_, _ = adev(numpy.angle(gains[a]) *
+                                       (180.0 / numpy.pi), dt, t)
+            phase_allan_dev[ia, i] = adev_
+            phase_allan_dev_error[ia, i] = adev_err_
+
+    mean_amp_allan_dev = numpy.mean(amp_allan_dev, axis=0)
+    mean_phase_allan_dev = numpy.mean(phase_allan_dev, axis=0)
+
+    # Original errors, using reported adev_error.
+    #mean_amp_allan_dev_err = numpy.mean(amp_allan_dev_error, axis=0)
+    #mean_phase_allan_dev_err = numpy.mean(phase_allan_dev_error, axis=0)
+
+    # Errors using std.dev. of the Allan deviations.
+    mean_amp_allan_dev_err = numpy.std(amp_allan_dev, axis=0)
+    mean_phase_allan_dev_err = numpy.std(phase_allan_dev, axis=0)
+
+    ax = axes2d[0]
+    # for i, a in enumerate(antennas):
+    #     ax.errorbar(tau_, amp_allan_dev[i, :], amp_allan_dev_error[i, :],
+    #                 fmt='.-')
+    ax.errorbar(tau_, mean_amp_allan_dev, mean_amp_allan_dev_err, fmt='.-')
+    ax.set_xlabel('Tau [seconds]')
+    ax.set_ylabel('Amplitude Allan dev.')
+
+    ax = axes2d[1]
+    # for i, a in enumerate(antennas):
+    #     ax.errorbar(tau_, phase_allan_dev[i, :],
+    #                 phase_allan_dev_error[i, :], fmt='.-')
+    ax.errorbar(tau_, mean_phase_allan_dev, mean_phase_allan_dev_err,
+                fmt='.-')
+    ax.set_xlabel('Tau [seconds]')
+    ax.set_ylabel('Phase Allan dev. [deg]')
+    plt.savefig(join(sim_dir, 'adev.png'), dpi=300)
+
+
 def _plot_corrupting_gains(settings):
     gains = _load_gains(settings)
     _plot_all_gains(gains, settings)
+    _plot_adev(gains, settings)
     antennas = _plot_gains(gains, settings)
     _plot_zoom_1(gains, settings, antennas[0],
                  'gains_zoom_ant_%i.png' % antennas[0])
