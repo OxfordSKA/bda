@@ -6,6 +6,7 @@ from os.path import join
 import matplotlib.pyplot as plt
 import pickle
 from bda.utilities import adev
+import copy
 
 
 def _load_gains(settings):
@@ -14,6 +15,7 @@ def _load_gains(settings):
                                          settings['ms_modifier']['sub_sampled'])
     gains_file = join(sim_dir, gains_file)
     gains = pickle.load(open(gains_file))
+    gains = copy.copy(gains)
     return gains
 
 
@@ -28,15 +30,16 @@ def _plot_all_gains(gains, settings):
 
     ax = axes2d[0]
     for i in range(len(gains)):
-        ax.plot(x, numpy.abs(gains[i]),
-                alpha=0.7, linewidth=0.5)
+        ax.plot(x, numpy.abs(gains[i]), alpha=0.7, linewidth=0.5)
     ax.set_ylabel('Amplitude', fontsize='small')
     ax.grid(True)
     ax.set_ylim(1.0-0.03, 1.0+0.03)
     ax.tick_params(axis='both', which='minor', labelsize='x-small')
     ax.tick_params(axis='both', which='major', labelsize='x-small')
+
     ax = axes2d[1]
     for i in range(len(gains)):
+        # print '%03i - %.3f' % (i,  numpy.std(gains[i]))
         ax.plot(x, numpy.degrees(numpy.angle(gains[i])),
                 alpha=0.7, linewidth=0.5)
     ax.set_ylabel('Phase [degrees]', fontsize='small')

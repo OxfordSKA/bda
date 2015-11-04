@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Module containing utility bda for BDA simulation steps."""
 
-import numpy as np
-import os
-import shutil
+import numpy
+import math
 
 
 def adev(data, dt, tau):
@@ -20,13 +19,13 @@ def adev(data, dt, tau):
     rate = 1. / dt
     m = int(rate * tau)
     # Truncate to an even multiple of this tau value
-    freq = data[0:len(data) - int(np.remainder(len(data), m))]
-    f = np.reshape(freq, (m, -1), order='F')
-    fa = np.mean(f, 0)
-    fd = np.diff(fa)
+    freq = data[0:len(data) - int(numpy.remainder(len(data), m))]
+    f = numpy.reshape(freq, (m, -1), order='F')
+    fa = numpy.mean(f, 0)
+    fd = numpy.diff(fa)
     n = len(fa) - 1
-    sm = np.sqrt(0.5 / n * (np.sum(fd**2)))
-    sme = sm / np.sqrt(n)
+    sm = numpy.sqrt(0.5 / n * (numpy.sum(fd**2)))
+    sme = sm / numpy.sqrt(n)
     return sm, sme, n
 
 
@@ -45,16 +44,16 @@ def fbm(n, hurst):
     Returns:
         Time series array.
     """
-    r = np.empty((n + 1,)) * np.NaN
+    r = numpy.empty((n + 1,)) * numpy.NaN
     r[0] = 1
     for k in range(1, n + 1):
         a = 2.0 * hurst
         r[k] = 0.5 * ((k + 1)**a - 2 * k**a + (k - 1)**a)
-    r = np.append(r, r[-2:0:-1])  # first row of circulant matrix
-    lambda_ = np.real(np.fft.fft(r)) / (2 * n)  # Eigenvalues
-    W = np.fft.fft(np.sqrt(lambda_) * (np.random.randn(2 * n) +
-                                       1j * np.random.randn(2 * n)))
-    W = n**(-hurst) * np.cumsum(np.real(W[0:n + 1]))  # Rescale
+    r = numpy.append(r, r[-2:0:-1])  # first row of circulant matrix
+    lambda_ = numpy.real(numpy.fft.fft(r)) / (2 * n)  # Eigenvalues
+    W = numpy.fft.fft(numpy.sqrt(lambda_) * (numpy.random.randn(2 * n) +
+                                             1j * numpy.random.randn(2 * n)))
+    W = n**(-hurst) * numpy.cumsum(numpy.real(W[0:n + 1]))  # Rescale
     return W
 
 
@@ -62,7 +61,7 @@ def eval_gain_amp(length, tstep, hurst, adev_fbm, sigma_wn, tau):
     """."""
     g_fbm = fbm(length, hurst)
     g_fbm *= adev_fbm / adev(g_fbm, tstep, tau)[0]
-    g_wn = np.random.randn(length + 1,) * sigma_wn
+    g_wn = numpy.random.randn(length + 1) * sigma_wn
     return (g_fbm + g_wn) + 1.0
 
 
@@ -70,7 +69,7 @@ def eval_gain_phase(n, tstep, H, adev_fbm, sigma_wn, tau):
     """."""
     p_fbm = fbm(n, H)
     p_fbm *= adev_fbm / adev(p_fbm, tstep, tau)[0]
-    p_wn = np.random.randn(n + 1,) * sigma_wn
+    p_wn = numpy.random.randn(n + 1) * sigma_wn
     phase = p_fbm + p_wn  # Combine FBM and WN signals
     return phase
 
@@ -78,29 +77,14 @@ def eval_gain_phase(n, tstep, H, adev_fbm, sigma_wn, tau):
 def eval_complex_gain(n, dt, amp_H, amp_adev_fbm, amp_sigma_wn,
                       phase_H, phase_adev_fbm, phase_sigma_wn,
                       amp_std_t0, phase_std_t0, tau):
-    """."""
     amp = eval_gain_amp(n, dt, amp_H, amp_adev_fbm, amp_sigma_wn, tau)
     phase = eval_gain_phase(n, dt, phase_H, phase_adev_fbm, phase_sigma_wn,
-                            tau) * np.pi / 180.0
-    amp_t0 = np.random.randn() * amp_std_t0
-    phase_t0 = np.random.randn() * phase_std_t0 * (np.pi / 180.)
-    gain = (amp + amp_t0) * np.exp(1.0j * (phase + phase_t0))
+                            tau)
+    phase = numpy.radians(phase)
+    amp_t0 = numpy.random.randn() * amp_std_t0
+    phase_t0 = numpy.random.randn() * math.radians(phase_std_t0)
+    gain = (amp + amp_t0) * numpy.exp(1.0j * (phase + phase_t0))
     return gain[0:n]
-
-
-def copytree(src, dst, symlinks=False, ignore=None):
-    """Copy a directory tree."""
-    shutil.copytree(src, dst, symlinks, ignore)
-#    for item in os.listdir(src):
-#        s = os.path.join(src, item)
-#        d = os.path.join(dst, item)
-#        print s, '->', d,
-#        if os.path.isdir(s):
-#            print 'shutil.copytree()...'
-#            shutil.copytree(s, d, symlinks, ignore)
-#        else:
-#            print 'shutil.copy2()...'
-#            shutil.copy2(s, d)
 
 
 def byteify(input):

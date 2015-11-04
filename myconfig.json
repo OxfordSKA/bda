@@ -1,5 +1,5 @@
 {
-  "path": "TEMP6",
+  "path": "TEMP7",
 
   "ms_name": {
     "model": "model",
@@ -34,8 +34,8 @@
       "channel_bw_hz": 10.7e3,
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
-      "num_times": 20,
-      "over_sample": 50
+      "num_times": 50,
+      "over_sample": 20
     }
   },
 
@@ -81,7 +81,6 @@
     "fov_radius_deg": 0.9
   },
 
-
   "imaging":
   {
     "overwrite": true,
@@ -94,7 +93,8 @@
         "fov_deg": [0.025, 0.025],
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000,
-        "w_planes": 0
+        "w_planes": 0,
+        "label": "0"
       },
       {
         "__comment": "image in direction of phase centre",
@@ -103,7 +103,28 @@
         "fov_deg": [0.025, 0.025],
         "ra_deg": -90.3545848760,
         "dec_deg": -8.5711239906,
-        "w_planes": 0
+        "w_planes": 0,
+        "label": "1"
+      },
+      {
+        "__comment": "image in direction of source",
+        "weighting": "natural",
+        "size": [512, 512],
+        "fov_deg": [0.025, 0.025],
+        "ra_deg": -90.35458487600000,
+        "dec_deg": -7.67112399060000,
+        "w_planes": 0,
+        "label": "0"
+      },
+      {
+        "__comment": "image in direction of phase centre",
+        "weighting": "natural",
+        "size": [512, 512],
+        "fov_deg": [0.025, 0.025],
+        "ra_deg": -90.3545848760,
+        "dec_deg": -8.5711239906,
+        "w_planes": 0,
+        "label": "1"
       }
     ],
     "columns": {

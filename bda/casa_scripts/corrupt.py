@@ -7,7 +7,7 @@ import os
 from os.path import join
 import time
 import pickle
-from bda import utilities
+from bda.utilities import eval_complex_gain, byteify
 import json
 
 
@@ -66,8 +66,7 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
     print 'obs. length = %f' % ((time_range[1] - time_range[0]) + dt)
     print '-' * 60
 
-
-    all_gains = {}
+    all_gains = dict()
     all_gains[0] = numpy.ones((num_times,), dtype='c16')
     tb.open(cal_table, nomodify=False)
     for t in range(0, num_times):
@@ -80,10 +79,10 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
 
     tb.open(cal_table, nomodify=False)
     for s in range(1, num_stations):
-        gains = utilities.eval_complex_gain(num_times, dt, amp_H, amp_adev_fbm,
-                                            amp_sigma_wn, phase_H,
-                                            phase_adev_fbm, phase_sigma_wn,
-                                            amp_std_t0, phase_std_t0, tau)
+        gains = eval_complex_gain(num_times, dt, amp_H, amp_adev_fbm,
+                                  amp_sigma_wn, phase_H,
+                                  phase_adev_fbm, phase_sigma_wn,
+                                  amp_std_t0, phase_std_t0, tau)
         all_gains[s] = gains
         for t in range(0, num_times):
             row = s + t * num_stations
@@ -95,7 +94,6 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
 
     gains_pickle = '%s.pickle' % cal_table
     pickle.dump(all_gains, open(gains_pickle, 'w'))
-
     tb.close()
 
 
@@ -135,20 +133,19 @@ def copy_column(ms, src_col, dst_col):
 
 def main(config_file):
     tAll = time.time()
-
-    settings = utilities.byteify(json.load(open(config_file)))
+    settings = byteify(json.load(open(config_file)))
     sim_dir = settings['path']
 
     # -------------------------------------------------------------------------
-    ms_in = join(sim_dir, '%s_%s.ms' %
-                 (settings['ms_name']['model'],
-                  settings['ms_modifier']['sub_sampled']))
-    ms_out = join(sim_dir, '%s_%s.ms' %
-                  (settings['ms_name']['corrupted'],
-                   settings['ms_modifier']['sub_sampled']))
-    cal_table = join(sim_dir, '%s_%s.gains' %
-                     (settings['ms_name']['corrupted'],
-                      settings['ms_modifier']['sub_sampled']))
+    ms_in = join(sim_dir,
+                 '%s_%s.ms' % (settings['ms_name']['model'],
+                               settings['ms_modifier']['sub_sampled']))
+    ms_out = join(sim_dir,
+                  '%s_%s.ms' % (settings['ms_name']['corrupted'],
+                                settings['ms_modifier']['sub_sampled']))
+    cal_table = join(sim_dir,
+                     '%s_%s.gains' % (settings['ms_name']['corrupted'],
+                                      settings['ms_modifier']['sub_sampled']))
     # -------------------------------------------------------------------------
 
     if os.path.isdir(ms_out):
@@ -159,7 +156,7 @@ def main(config_file):
 
     t0 = time.time()
     print '+ Coping simulated MS %s to %s ...' % (ms_in, ms_out)
-    utilities.copytree(ms_in, ms_out)
+    shutil.copytree(ms_in, ms_out)
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()

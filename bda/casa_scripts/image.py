@@ -90,11 +90,14 @@ def _run():
     sim_dir = settings['path']
     ms_files = [f for f in os.listdir(os.path.abspath(sim_dir))
                 if f.endswith('.ms') and os.path.isdir(join(sim_dir, f))]
+    sub_sampled = settings['ms_modifier']['sub_sampled']
 
     settings = settings['imaging']
     column_spec = settings['columns']
     for f in ms_files:
         ms = join(sim_dir, f)
+        if sub_sampled in ms:
+            continue
         for k in column_spec.keys():
             if k in ms:
                 columns = column_spec[k]
@@ -102,7 +105,7 @@ def _run():
                     root_name = os.path.splitext(ms)[0] + '_{}'.format(column)
                     t0 = time.time()
                     for i, image in enumerate(settings['images']):
-                        image_name = '%s_%i' % (root_name, i)
+                        image_name = '%s_%s' % (root_name, image['label'])
                         if image['weighting'] == 'natural':
                             image_name += '_n'
                         elif image['weighting'] == 'uniform':

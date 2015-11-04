@@ -8,23 +8,20 @@ from os.path import join
 from shutil import copyfile
 import drivecasa
 from bda import simulate, plot_gains
-from bda.util import fits_diff
+from bda.util.fits_diff import fits_diff
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='BDA script runner.',
-                                     epilog='')
-    parser.add_argument('config', type=str, nargs='?', help='JSON config file.')
-    args = parser.parse_args()
-    if args.config is None:
-        parser.print_usage()
-        print "%s: error: too few arguments" % os.path.basename(__file__)
-        exit(1)
-    if not os.path.isfile(args.config):
-        print "Error: Config file '%s' not found!" % args.config
-        exit(1)
+def _diff_cal_model(suffix, label, sim_dir):
+    diff = 'diff%scal_model_%s.fits' % (label, suffix)
+    cal = 'calibrated%sCORRECTED_DATA_%s.fits' % (label, suffix)
+    model = 'calibrated%sMODEL_DATA_%s.fits' % (label, suffix)
+    fits_diff(join(sim_dir, diff), join(sim_dir, cal),
+              join(sim_dir, model))
 
+
+
+def _run(settings_file):
     try:
-        settings = json.load(open(args.config))
+        settings = json.load(open(settings_file))
     except ValueError as e:
         print 'ERROR: FAILED TO PARSE JSON CONFIG FILE!!'
         print e.message
@@ -36,7 +33,7 @@ if __name__ == '__main__':
                             echo_to_stdout=True,
                             timeout=None)
     # Add config_file variable to the CASA variable list.
-    casa.run_script(["config_file = '{}'".format(args.config)])
+    casa.run_script(["config_file = '{}'".format(settings_file)])
 
     # Top level simulation output directory.
     sim_dir = settings['path']
@@ -59,9 +56,6 @@ if __name__ == '__main__':
     casa.run_script_from_file('bda/casa_scripts/average_ms.py')
 
     # Add thermal noise.
-    # TODO-BM: for noise to work well we have to image a longer data set ...
-    # the calibration error due to noise should be gaussian so should go away?
-    # Otherwise have to play with the calibration interval in gaincal...?
     casa.run_script_from_file('bda/casa_scripts/add_noise.py')
 
     # Baseline dependent averaging.
@@ -80,54 +74,57 @@ if __name__ == '__main__':
     # Image.
     casa.run_script_from_file('bda/casa_scripts/image.py')
 
-    # # Make some difference fits images.
-    weight = 'u'
-    idx = 0
-    fits_diff.fits_diff(join(sim_dir, 'diff_cal_model.fits'),
-                        join(sim_dir, 'calibrated_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+    # Make some difference fits images.
+    # weight 'u' = uniform, 'n' = natural
+    # label: 0 = @ source, 1 = @ phase centre
+    for label in ['0', '1']:
+        for weight in ['u', 'n']:
+            _suffix = '%s_%s' % (label, weight)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_noisy_cal_model.fits'),
-                        join(sim_dir, 'calibrated_noisy_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_noisy_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_'
+            _diff_cal_model(_suffix, _label, sim_dir)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_bda_cal_model.fits'),
-                        join(sim_dir, 'calibrated_bda_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_bda_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_noisy_'
+            _diff_cal_model(_suffix, _label, sim_dir)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_noisy_bda_cal_model.fits'),
-                        join(sim_dir, 'calibrated_noisy_bda_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_noisy_bda_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_bda_'
+            _diff_cal_model(_suffix, _label, sim_dir)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_bda_expanded_cal_model.fits'),
-                        join(sim_dir, 'calibrated_bda_expanded_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_bda_expanded_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_noisy_bda_'
+            _diff_cal_model(_suffix, _label, sim_dir)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_noisy_bda_expanded_cal_model.fits'),
-                        join(sim_dir, 'calibrated_noisy_bda_expanded_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_noisy_bda_expanded_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_bda_expanded_'
+            _diff_cal_model(_suffix, _label, sim_dir)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_bda_expanded_bda_cal_model.fits'),
-                        join(sim_dir, 'calibrated_bda_expanded_bda_'
-                                      'CORRECTED_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'calibrated_bda_expanded_bda_'
-                                      'MODEL_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_noisy_bda_expanded_'
+            _diff_cal_model(_suffix, _label, sim_dir)
 
-    fits_diff.fits_diff(join(sim_dir, 'diff_corrupted_noise.fits'),
-                        join(sim_dir, 'corrupted_DATA_%i_%s.fits' % (idx, weight)),
-                        join(sim_dir, 'corrupted_noisy_DATA_%i_%s.fits' % (idx, weight)))
+            _label = '_bda_expanded_bda_'
+            _diff_cal_model(_suffix, _label, sim_dir)
+
+            _label = '_noisy_bda_expanded_bda_'
+            _diff_cal_model(_suffix, _label, sim_dir)
+            
+            fits_diff(join(sim_dir, 'diff_corrupted_noise.fits'),
+                      join(sim_dir, 'corrupted_DATA_%s_%s.fits' % (label, weight)),
+                      join(sim_dir, 'corrupted_noisy_DATA_%s_%s.fits' % (label, weight)))
 
     # TODO-BM: Plot results fits images / diffs.
     # plot.run(settings)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='BDA script runner.',
+                                     epilog='')
+    parser.add_argument('config', type=str, nargs='?', help='JSON config file.')
+    args = parser.parse_args()
+    if args.config is None:
+        parser.print_usage()
+        print "%s: error: too few arguments" % os.path.basename(__file__)
+        exit(1)
+    if not os.path.isfile(args.config):
+        print "Error: Config file '%s' not found!" % args.config
+        exit(1)
+
+    _run(args.config)
+
