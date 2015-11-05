@@ -57,7 +57,7 @@
     "phase":
     {
       "std_t0": 15.0,
-      "hurst": 0.75,
+      "hurst": 0.8,
       "allan_var": 2.0
     }
   },
@@ -77,8 +77,8 @@
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 20,
-    "max_fact": 1.01,
+    "idt_max": 10,
+    "max_fact": 1.005,
     "fov_radius_deg": 0.9
   },
 
@@ -91,7 +91,7 @@
         "__comment": "image in direction of source",
         "weighting": "uniform",
         "size": [512, 512],
-        "fov_deg": [0.015, 0.015],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000,
         "w_planes": 0,
@@ -101,7 +101,7 @@
         "__comment": "image in direction of phase centre",
         "weighting": "uniform",
         "size": [512, 512],
-        "fov_deg": [0.015, 0.015],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.3545848760,
         "dec_deg": -8.5711239906,
         "w_planes": 0,
@@ -111,7 +111,7 @@
         "__comment": "image in direction of source",
         "weighting": "natural",
         "size": [512, 512],
-        "fov_deg": [0.015, 0.015],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000,
         "w_planes": 0,
@@ -121,7 +121,7 @@
         "__comment": "image in direction of phase centre",
         "weighting": "natural",
         "size": [512, 512],
-        "fov_deg": [0.015, 0.015],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.3545848760,
         "dec_deg": -8.5711239906,
         "w_planes": 0,
