@@ -58,7 +58,7 @@
     {
       "std_t0": 15.0,
       "hurst": 0.8,
-      "allan_var": 1.5
+      "allan_var": 1.0
     }
   },
 
@@ -78,7 +78,7 @@
   {
     "method": "mstransform",
     "idt_max": 10,
-    "max_fact": 1.002,
+    "max_fact": 1.003,
     "fov_radius_deg": 0.9
   },
 
