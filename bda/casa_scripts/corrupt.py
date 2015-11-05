@@ -7,8 +7,33 @@ import os
 from os.path import join
 import time
 import pickle
+
+
 from bda.utilities import eval_complex_gain, byteify
 import json
+
+
+def _smooth(x, window_len=11, window='hanning'):
+    if x.ndim != 1:
+        raise ValueError("smooth only accepts 1 dimension arrays.")
+
+    if x.size < window_len:
+        raise ValueError("Input vector needs to be bigger than window size.")
+
+    if window_len < 3:
+        return x
+
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', "
+                         "'bartlett', 'blackman'")
+    s = numpy.r_[x[window_len-1:0:-1], x, x[-1:-window_len:-1]]
+    if window == 'flat':  # moving average
+        w = numpy.ones(window_len, 'd')
+    else:
+        w = eval('numpy.' + window + '(window_len)')
+
+    y = numpy.convolve(w / w.sum(), s, mode='valid')
+    return y
 
 
 def get_time_info(ms):
@@ -46,7 +71,8 @@ def create_empty_caltable(ms, cal_table, num_times):
     tb.close()
 
 
-def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
+def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt,
+                  over_sample):
     """Fill a CASA calibration table."""
     # ----------------------------------
     tau = round(settings['tau_s'] / dt) * dt
@@ -66,6 +92,10 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
     print 'obs. length = %f' % ((time_range[1] - time_range[0]) + dt)
     print '-' * 60
 
+    # smooth_gains = True
+    # window_length = over_sample * 2
+    # TODO-BM 1. set all gains to 1+0j
+    # TODO-BM 2. vary all gains no ref antenna and include smoothing (perhaps on the window length of the oversample?)
     all_gains = dict()
     all_gains[0] = numpy.ones((num_times,), dtype='c16')
     tb.open(cal_table, nomodify=False)
@@ -83,12 +113,17 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt):
                                   amp_sigma_wn, phase_H,
                                   phase_adev_fbm, phase_sigma_wn,
                                   amp_std_t0, phase_std_t0, tau)
+        # if smooth_gains:
+        #     gains = _smooth(gains, window_len=window_length)
+        #     gains = gains[0:num_times]
         all_gains[s] = gains
+        all_gains[s] = numpy.ones((num_times,), dtype='c16')
+
         for t in range(0, num_times):
             row = s + t * num_stations
             gain = tb.getcell('CPARAM', row)
-            gain[0] = gains[t]
-            gain[1] = gains[t]
+            gain[0] = all_gains[s][t]
+            gain[1] = all_gains[s][t]
             tb.putcell('CPARAM', row, gain)
             tb.putcell('TIME', row, time_range[0] + t * dt)
 
@@ -189,7 +224,8 @@ def main(config_file):
 
     t0 = time.time()
     print '+ Filling calibration table with corruptions ...'
-    fill_caltable(settings['corrupt'], cal_table, num_stations, num_times, time_range, dt)
+    fill_caltable(settings['corrupt'], cal_table, num_stations, num_times,
+                  time_range, dt, settings['sim']['observation']['over_sample'])
     print '+ Done [%.3fs].\n' % (time.time() - t0)
 
     t0 = time.time()
