@@ -92,8 +92,10 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt,
     print 'obs. length = %f' % ((time_range[1] - time_range[0]) + dt)
     print '-' * 60
 
-    # smooth_gains = True
-    # window_length = over_sample * 2
+    smooth_gains = settings['smooth']
+    window_length = settings['smooth_length']
+    if smooth_gains:
+        print 'INFO: Smoothing gains with window length = %i' % window_length
     # TODO-BM 1. set all gains to 1+0j
     # TODO-BM 2. vary all gains no ref antenna and include smoothing (perhaps on the window length of the oversample?)
     all_gains = dict()
@@ -113,11 +115,11 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt,
                                   amp_sigma_wn, phase_H,
                                   phase_adev_fbm, phase_sigma_wn,
                                   amp_std_t0, phase_std_t0, tau)
-        # if smooth_gains:
-        #     gains = _smooth(gains, window_len=window_length)
-        #     gains = gains[0:num_times]
+        if smooth_gains:
+            gains = _smooth(gains, window_len=window_length)
+            gains = gains[0:num_times]
         all_gains[s] = gains
-        all_gains[s] = numpy.ones((num_times,), dtype='c16')
+        # all_gains[s] = numpy.ones((num_times,), dtype='c16')
 
         for t in range(0, num_times):
             row = s + t * num_stations

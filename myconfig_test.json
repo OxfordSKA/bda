@@ -1,5 +1,5 @@
 {
-  "path": "TEST_unit_gains",
+  "path": "TEST_smooth_gains",
 
   "ms_name": {
     "model": "model",
@@ -35,7 +35,7 @@
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
       "num_times": 50,
-      "over_sample": 25
+      "over_sample": 10
     }
   },
 
@@ -46,7 +46,8 @@
                   "use a smaller tau value?"],
     "tau_s": 1.0,
     "seed": 1,
-    "plot_gains": true,
+    "smooth": true,
+    "smooth_length": 40,
     "amplitude":
     {
       "std_t0": 0.005,
@@ -55,9 +56,9 @@
     },
     "phase":
     {
-      "std_t0": 20.0,
+      "std_t0": 15.0,
       "hurst": 0.8,
-      "allan_var": 0.5
+      "allan_var": 0.2
     }
   },
 

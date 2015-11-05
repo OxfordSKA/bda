@@ -46,7 +46,8 @@
                   "use a smaller tau value?"],
     "tau_s": 1.0,
     "seed": 1,
-    "plot_gains": true,
+    "smooth": true,
+    "smooth_length": 40,
     "amplitude":
     {
       "std_t0": 0.005,

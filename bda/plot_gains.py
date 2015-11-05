@@ -44,7 +44,7 @@ def _plot_all_gains(gains, settings):
                 alpha=0.7, linewidth=0.5)
     ax.set_ylabel('Phase [degrees]', fontsize='small')
     ax.grid(True)
-    ax.set_ylim(-160, 160)
+    # ax.set_ylim(-160, 160)
     ax.tick_params(axis='both', which='minor', labelsize='x-small')
     ax.tick_params(axis='both', which='major', labelsize='x-small')
     ax.set_xlabel('Time [seconds]', fontsize='small')
