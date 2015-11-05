@@ -1,5 +1,5 @@
 {
-  "path": "TEST_UVW_expand",
+  "path": "TEST_unit_gains",
 
   "ms_name": {
     "model": "model",
@@ -74,11 +74,10 @@
     "interval": 1.0
   },
 
-
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 20,
+    "idt_max": 10,
     "max_fact": 1.002,
     "fov_radius_deg": 0.9
   },
@@ -101,26 +100,6 @@
       {
         "__comment": "image in direction of phase centre",
         "weighting": "uniform",
-        "size": [512, 512],
-        "fov_deg": [0.01, 0.01],
-        "ra_deg": -90.3545848760,
-        "dec_deg": -8.5711239906,
-        "w_planes": 0,
-        "label": "1"
-      },
-      {
-        "__comment": "image in direction of source",
-        "weighting": "natural",
-        "size": [512, 512],
-        "fov_deg": [0.01, 0.01],
-        "ra_deg": -90.35458487600000,
-        "dec_deg": -7.67112399060000,
-        "w_planes": 0,
-        "label": "0"
-      },
-      {
-        "__comment": "image in direction of phase centre",
-        "weighting": "natural",
         "size": [512, 512],
         "fov_deg": [0.01, 0.01],
         "ra_deg": -90.3545848760,

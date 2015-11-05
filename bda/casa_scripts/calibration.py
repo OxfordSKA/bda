@@ -60,7 +60,7 @@ if __name__ == "__main__":
         ms_out = join(sim_dir, '%s%s.ms' % (calibrated_root, ms))
         cal_table = join(sim_dir, '%s%s.gains' % (calibrated_root, ms))
 
-        if os.path.isdir(ms_out):
+        if os.path.isdir(ms_out) or not os.path.isdir(ms_in):
             continue
 
         print '=' * 80

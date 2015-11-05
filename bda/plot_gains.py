@@ -183,6 +183,8 @@ def _plot_adev(gains, settings):
     ax.errorbar(tau_, mean_amp_allan_dev, mean_amp_allan_dev_err, fmt='.-')
     ax.set_xlabel('Tau [seconds]')
     ax.set_ylabel('Amplitude Allan dev.')
+    # ax.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
+    print ax.get_ylim()
 
     ax = axes2d[1]
     # for i, a in enumerate(antennas):
