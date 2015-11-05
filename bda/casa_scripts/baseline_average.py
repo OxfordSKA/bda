@@ -81,7 +81,7 @@ if __name__ == "__main__":
     fov_radius = bda_settings['fov_radius_deg']
     # -------------------------------------------------------------------------
 
-    fh = open(join(sim_dir, 'bda_log.txt'))
+    fh = open(join(sim_dir, 'bda_log.txt'), 'w')
 
     # model.ms -> model_bda.ms
     # corrupted.ms -> corrupted_bda.ms
@@ -128,7 +128,7 @@ if __name__ == "__main__":
             tb.close()
             print '%i:%i -> 1:%.3f' % (rows_out, rows_in,
                                        rows_in/float(rows_out))
-            fh.write('%s,%s,%.3f' % (ms_in, ms_out, rows_in/float(rows_out)))
+            fh.write('%s,%s,%.3f\n' % (ms_in, ms_out, rows_in/float(rows_out)))
             print '+ Time taken in averaging = %.3fs [%s]' % \
                 (time.time() - t0, ms_out)
 
