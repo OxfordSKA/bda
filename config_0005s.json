@@ -65,7 +65,7 @@
   "noise":
   {
     "seed": 1,
-    "noise_rms_jy": 1.0e-2
+    "noise_rms_jy": 1.0e-3
   },
 
   "calibration":
@@ -78,7 +78,7 @@
   {
     "method": "mstransform",
     "idt_max": 10,
-    "max_fact": 1.005,
+    "max_fact": 1.003,
     "fov_radius_deg": 0.9
   },
 
