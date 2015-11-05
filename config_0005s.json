@@ -58,7 +58,7 @@
     {
       "std_t0": 15.0,
       "hurst": 0.8,
-      "allan_var": 2.0
+      "allan_var": 1.5
     }
   },
 
