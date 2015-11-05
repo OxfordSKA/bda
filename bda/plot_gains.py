@@ -33,7 +33,7 @@ def _plot_all_gains(gains, settings):
         ax.plot(x, numpy.abs(gains[i]), alpha=0.7, linewidth=0.5)
     ax.set_ylabel('Amplitude', fontsize='small')
     ax.grid(True)
-    ax.set_ylim(1.0-0.03, 1.0+0.03)
+    # ax.set_ylim(1.0-0.03, 1.0+0.03)
     ax.tick_params(axis='both', which='minor', labelsize='x-small')
     ax.tick_params(axis='both', which='major', labelsize='x-small')
 
@@ -180,9 +180,10 @@ def _plot_adev(gains, settings):
     # for i, a in enumerate(antennas):
     #     ax.errorbar(tau_, amp_allan_dev[i, :], amp_allan_dev_error[i, :],
     #                 fmt='.-')
-    ax.errorbar(tau_, mean_amp_allan_dev, mean_amp_allan_dev_err, fmt='.-')
-    ax.set_xlabel('Tau [seconds]')
-    ax.set_ylabel('Amplitude Allan dev.')
+    # ax.errorbar(tau_, mean_amp_allan_dev, mean_amp_allan_dev_err, fmt='.-')
+    ax.plot(tau_, mean_amp_allan_dev, '-')
+    ax.set_xlabel('Tau [seconds]', fontsize='small')
+    ax.set_ylabel('Amplitude Allan dev.', fontsize='small')
     # ax.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
     print ax.get_ylim()
 
@@ -190,10 +191,11 @@ def _plot_adev(gains, settings):
     # for i, a in enumerate(antennas):
     #     ax.errorbar(tau_, phase_allan_dev[i, :],
     #                 phase_allan_dev_error[i, :], fmt='.-')
-    ax.errorbar(tau_, mean_phase_allan_dev, mean_phase_allan_dev_err,
-                fmt='.-')
-    ax.set_xlabel('Tau [seconds]')
-    ax.set_ylabel('Phase Allan dev. [deg]')
+    # ax.errorbar(tau_, mean_phase_allan_dev, mean_phase_allan_dev_err,
+    # fmt='.-')
+    ax.plot(tau_, mean_phase_allan_dev, '-')
+    ax.set_xlabel('Tau [seconds]', fontsize='small')
+    ax.set_ylabel('Phase Allan dev. [deg]', fontsize='small')
     plt.savefig(join(sim_dir, 'adev.png'), dpi=300)
 
 

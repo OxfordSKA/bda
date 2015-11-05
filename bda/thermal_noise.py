@@ -32,7 +32,7 @@ sigma_pq /= 2.0**0.5
 
 print 'sigma_pq =', sigma_pq, 'Jy'
 
-num_antennas = 133
+num_antennas = 197
 num_baselines = (num_antennas * (num_antennas - 1)) / 2
 num_times = 10
 sigma_im = sigma_pq / (0.9*(num_baselines * num_times)**0.5)

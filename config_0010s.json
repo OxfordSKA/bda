@@ -1,5 +1,5 @@
 {
-  "path": "TEST_gains_low_bda",
+  "path": "SIM_0010s",
 
   "ms_name": {
     "model": "model",
@@ -34,7 +34,7 @@
       "__channel_bw_hz": 10.7e3,
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
-      "num_times": 50,
+      "num_times": 100,
       "over_sample": 20
     }
   },
@@ -45,7 +45,7 @@
     "__comment": ["for more stable gains in short simulations",
                   "use a smaller tau value?"],
     "tau_s": 1.0,
-    "seed": 1,
+    "seed": 99,
     "smooth": false,
     "smooth_length": 40,
     "amplitude":
@@ -57,16 +57,15 @@
     "phase":
     {
       "std_t0": 15.0,
-      "hurst": 0.8,
-      "allan_var": 0.2
+      "hurst": 0.75,
+      "allan_var": 2.0
     }
   },
 
   "noise":
   {
     "seed": 1,
-    "__noise_rms_jy": 10.0,
-    "noise_rms_jy": 0.2
+    "noise_rms_jy": 1.0e-3
   },
 
   "calibration":
@@ -78,8 +77,8 @@
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 2,
-    "max_fact": 1.002,
+    "idt_max": 20,
+    "max_fact": 1.01,
     "fov_radius_deg": 0.9
   },
 
@@ -92,7 +91,7 @@
         "__comment": "image in direction of source",
         "weighting": "uniform",
         "size": [512, 512],
-        "fov_deg": [0.01, 0.01],
+        "fov_deg": [0.015, 0.015],
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000,
         "w_planes": 0,
@@ -102,7 +101,27 @@
         "__comment": "image in direction of phase centre",
         "weighting": "uniform",
         "size": [512, 512],
-        "fov_deg": [0.01, 0.01],
+        "fov_deg": [0.015, 0.015],
+        "ra_deg": -90.3545848760,
+        "dec_deg": -8.5711239906,
+        "w_planes": 0,
+        "label": "1"
+      },
+      {
+        "__comment": "image in direction of source",
+        "weighting": "natural",
+        "size": [512, 512],
+        "fov_deg": [0.015, 0.015],
+        "ra_deg": -90.35458487600000,
+        "dec_deg": -7.67112399060000,
+        "w_planes": 0,
+        "label": "0"
+      },
+      {
+        "__comment": "image in direction of phase centre",
+        "weighting": "natural",
+        "size": [512, 512],
+        "fov_deg": [0.015, 0.015],
         "ra_deg": -90.3545848760,
         "dec_deg": -8.5711239906,
         "w_planes": 0,

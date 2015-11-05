@@ -9,6 +9,7 @@ from shutil import copyfile
 import drivecasa
 from bda import simulate, plot_gains, plot_images
 from bda.util.fits_diff import fits_diff
+import time
 
 
 def _diff_cal_model(suffix, label, sim_dir):
@@ -48,6 +49,8 @@ def _run(settings_file):
     if not os.path.exists(join(sim_dir, args.config)):
         copyfile(args.config, join(sim_dir, args.config))
 
+    t0 = time.time()
+
     # Simulation.
     simulate.run(settings, overwrite=False)
 
@@ -61,7 +64,7 @@ def _run(settings_file):
     casa.run_script_from_file('bda/casa_scripts/average_ms.py')
 
     # Add thermal noise.
-    # casa.run_script_from_file('bda/casa_scripts/add_noise.py')
+    casa.run_script_from_file('bda/casa_scripts/add_noise.py')
 
     # Baseline dependent averaging.
     # TODO-BM different BDA schemes
@@ -93,6 +96,9 @@ def _run(settings_file):
 
     # Plot results fits images / diffs.
     plot_images.run(settings)
+
+    print ''
+    print 'Total run time = %.3fs' % (time.time() - t0)
 
 
 if __name__ == '__main__':
