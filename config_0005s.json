@@ -1,5 +1,5 @@
 {
-  "path": "SIM_0005s_v2",
+  "path": "SIM_0005s",
 
   "ms_name": {
     "model": "model",
@@ -58,7 +58,7 @@
     {
       "std_t0": 15.0,
       "hurst": 0.8,
-      "allan_var": 1.0
+      "allan_var": 2.0
     }
   },
 
@@ -77,8 +77,8 @@
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 5,
-    "max_fact": 1.005,
+    "idt_max": 10,
+    "max_fact": 1.002,
     "fov_radius_deg": 0.9
   },
 
