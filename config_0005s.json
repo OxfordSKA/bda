@@ -45,7 +45,7 @@
     "__comment": ["for more stable gains in short simulations",
                   "use a smaller tau value?"],
     "tau_s": 1.0,
-    "seed": 99,
+    "seed": 1,
     "smooth": false,
     "smooth_length": 40,
     "amplitude":
@@ -58,14 +58,14 @@
     {
       "std_t0": 15.0,
       "hurst": 0.8,
-      "allan_var": 2.0
+      "allan_var": 1.0
     }
   },
 
   "noise":
   {
     "seed": 1,
-    "noise_rms_jy": 1.0e-3
+    "noise_rms_jy": 1.0e-2
   },
 
   "calibration":
