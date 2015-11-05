@@ -52,13 +52,13 @@
     {
       "std_t0": 0.005,
       "hurst": 0.8,
-      "allan_var": 1.0e-4
+      "allan_var": 1.0e-6
     },
     "phase":
     {
-      "std_t0": 20.0,
+      "std_t0": 10.0,
       "hurst": 0.8,
-      "allan_var": 0.5
+      "allan_var": 0.01
     }
   },
 

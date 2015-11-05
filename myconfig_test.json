@@ -1,5 +1,5 @@
 {
-  "path": "TEST_smooth_gains",
+  "path": "TEST_gains",
 
   "ms_name": {
     "model": "model",
@@ -46,7 +46,7 @@
                   "use a smaller tau value?"],
     "tau_s": 1.0,
     "seed": 1,
-    "smooth": true,
+    "smooth": false,
     "smooth_length": 40,
     "amplitude":
     {
