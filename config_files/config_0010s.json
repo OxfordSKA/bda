@@ -1,5 +1,5 @@
 {
-  "path": "TEMP7",
+  "path": "SIM_0010s",
 
   "ms_name": {
     "model": "model",
@@ -29,12 +29,12 @@
       "ra_deg": -90.3545848760,
       "dec_deg": -8.5711239906,
       "freq_hz": 700.0e6,
-      "__channel_bw_hz": 0.0,
+      "channel_bw_hz": 0.0,
       "__comment": "65536 channels over 700e6 Hz band",
-      "channel_bw_hz": 10.7e3,
+      "__channel_bw_hz": 10.7e3,
       "start_time_mjd": 57086.113194,
       "dt_s": 0.1,
-      "num_times": 50,
+      "num_times": 100,
       "over_sample": 20
     }
   },
@@ -42,9 +42,12 @@
   "corrupt":
   {
     "gain_table": "corrupted",
+    "__comment": ["for more stable gains in short simulations",
+                  "use a smaller tau value?"],
     "tau_s": 1.0,
-    "seed": 666,
-    "plot_gains": true,
+    "seed": 1,
+    "smooth": false,
+    "smooth_length": 40,
     "amplitude":
     {
       "std_t0": 0.005,
@@ -53,17 +56,16 @@
     },
     "phase":
     {
-      "std_t0": 20.0,
+      "std_t0": 15.0,
       "hurst": 0.8,
-      "allan_var": 0.5
+      "allan_var": 1.0
     }
   },
 
   "noise":
   {
     "seed": 1,
-    "__noise_rms_jy": 10.0,
-    "noise_rms_jy": 0.5
+    "noise_rms_jy": 1.0e-3
   },
 
   "calibration":
@@ -72,12 +74,11 @@
     "interval": 1.0
   },
 
-
   "baseline_average":
   {
     "method": "mstransform",
-    "idt_max": 20,
-    "max_fact": 1.002,
+    "idt_max": 10,
+    "max_fact": 1.003,
     "fov_radius_deg": 0.9
   },
 
@@ -90,7 +91,7 @@
         "__comment": "image in direction of source",
         "weighting": "uniform",
         "size": [512, 512],
-        "fov_deg": [0.025, 0.025],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000,
         "w_planes": 0,
@@ -100,7 +101,7 @@
         "__comment": "image in direction of phase centre",
         "weighting": "uniform",
         "size": [512, 512],
-        "fov_deg": [0.025, 0.025],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.3545848760,
         "dec_deg": -8.5711239906,
         "w_planes": 0,
@@ -110,7 +111,7 @@
         "__comment": "image in direction of source",
         "weighting": "natural",
         "size": [512, 512],
-        "fov_deg": [0.025, 0.025],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000,
         "w_planes": 0,
@@ -120,7 +121,7 @@
         "__comment": "image in direction of phase centre",
         "weighting": "natural",
         "size": [512, 512],
-        "fov_deg": [0.025, 0.025],
+        "fov_deg": [0.01, 0.01],
         "ra_deg": -90.3545848760,
         "dec_deg": -8.5711239906,
         "w_planes": 0,

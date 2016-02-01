@@ -7,16 +7,19 @@ import argparse
 from os.path import join
 from shutil import copyfile
 import drivecasa
-from bda import simulate, plot_gains
-from bda.util.fits_diff import fits_diff
+from pybda import simulate, plot_gains, plot_images
+from pybda.util.fits_diff import fits_diff
+import time
+
 
 def _diff_cal_model(suffix, label, sim_dir):
     diff = 'diff%scal_model_%s.fits' % (label, suffix)
     cal = 'calibrated%sCORRECTED_DATA_%s.fits' % (label, suffix)
     model = 'calibrated%sMODEL_DATA_%s.fits' % (label, suffix)
+    if not os.path.isfile(join(sim_dir, cal)):
+        return
     fits_diff(join(sim_dir, diff), join(sim_dir, cal),
               join(sim_dir, model))
-
 
 
 def _run(settings_file):
@@ -38,10 +41,15 @@ def _run(settings_file):
     # Top level simulation output directory.
     sim_dir = settings['path']
 
-    # Create a copy of the settings file.
+    # Create the simulation directory.
     if not os.path.isdir(sim_dir):
         os.makedirs(sim_dir)
-    copyfile(args.config, join(sim_dir, args.config))
+
+    # Create a copy of the settings file.
+    if not os.path.exists(join(sim_dir, args.config)):
+        copyfile(args.config, join(sim_dir, args.config))
+
+    t0 = time.time()
 
     # Simulation.
     simulate.run(settings, overwrite=False)
@@ -75,42 +83,22 @@ def _run(settings_file):
     casa.run_script_from_file('bda/casa_scripts/image.py')
 
     # Make some difference fits images.
+    # TODO-BM move this into its own module.
     # weight 'u' = uniform, 'n' = natural
     # label: 0 = @ source, 1 = @ phase centre
     for label in ['0', '1']:
         for weight in ['u', 'n']:
             _suffix = '%s_%s' % (label, weight)
+            for _label in ['_', '_noisy_', '_bda_', '_noisy_bda_',
+                           '_bda_expanded_', '_noisy_bda_expanded_',
+                           '_bda_expanded_bda_', '_noisy_bda_expanded_bda_']:
+                _diff_cal_model(_suffix, _label, sim_dir)
 
-            _label = '_'
-            _diff_cal_model(_suffix, _label, sim_dir)
+    # Plot results fits images / diffs.
+    plot_images.run(settings)
 
-            _label = '_noisy_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-
-            _label = '_bda_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-
-            _label = '_noisy_bda_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-
-            _label = '_bda_expanded_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-
-            _label = '_noisy_bda_expanded_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-
-            _label = '_bda_expanded_bda_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-
-            _label = '_noisy_bda_expanded_bda_'
-            _diff_cal_model(_suffix, _label, sim_dir)
-            
-            fits_diff(join(sim_dir, 'diff_corrupted_noise.fits'),
-                      join(sim_dir, 'corrupted_DATA_%s_%s.fits' % (label, weight)),
-                      join(sim_dir, 'corrupted_noisy_DATA_%s_%s.fits' % (label, weight)))
-
-    # TODO-BM: Plot results fits images / diffs.
-    # plot.run(settings)
+    print ''
+    print 'Total run time = %.3fs' % (time.time() - t0)
 
 
 if __name__ == '__main__':
