@@ -7,8 +7,8 @@ import argparse
 from os.path import join
 from shutil import copyfile
 import drivecasa
-from bda import simulate, plot_gains, plot_images
-from bda.util.fits_diff import fits_diff
+from pybda import simulate, plot_gains, plot_images
+from pybda.util.fits_diff import fits_diff
 import time
 
 
