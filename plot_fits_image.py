@@ -28,12 +28,12 @@ if __name__ == '__main__':
 
     fits_file = sys.argv[1]
 
-    hdu, data = _get_hdu(fits_file)
+    hdu, data = _get_hdu(fits_file, flux_scale=1.0e3)
     cmin = data.min()
     cmax = data.max()
     cmax = max(abs(cmin), abs(cmax))
     cmin = -cmax
-    # print cmin, cmax
+    print cmin, cmax
 
     fig = plt.figure(figsize=(6.5, 6.5))
     stretch = 'linear'
@@ -44,6 +44,10 @@ if __name__ == '__main__':
     #                   cmap='afmhot')
     f.show_colorscale(vmin=cmin, vmax=cmax, stretch=stretch,
                       cmap='seismic')
+    # f.show_colorscale(vmax=1000.0, stretch=stretch, cmap='seismic')
+    # f.show_colorscale(cmap='seismic')
+
+
     f.add_colorbar()
     f.colorbar.set_width(0.1)
     f.colorbar.set_axis_label_text(ur'mJy / beam')
