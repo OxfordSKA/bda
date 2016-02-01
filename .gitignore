@@ -3,4 +3,5 @@
 /.project
 /.idea
 /results/sdp_f2f_astron
+/TEST_*
 /*.png
