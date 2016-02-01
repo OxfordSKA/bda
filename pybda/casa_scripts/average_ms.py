@@ -5,7 +5,7 @@ import os
 from os.path import join
 import shutil
 import json
-from bda import utilities
+from pybda import utilities
 
 
 def _get_num_antennas(ms):

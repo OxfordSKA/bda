@@ -8,7 +8,7 @@ import shutil
 import time
 import math
 import json
-from bda import utilities
+from pybda import utilities
 
 
 def get_time_info(ms):

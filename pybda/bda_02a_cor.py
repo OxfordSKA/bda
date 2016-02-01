@@ -9,7 +9,7 @@ import json
 import pickle
 import shutil
 from numpy import array, int32
-from bda import utilities
+import utilities
 
 
 def get_time_info(ms):

@@ -5,7 +5,7 @@ import numpy
 from os.path import join
 import matplotlib.pyplot as plt
 import pickle
-from bda.utilities import adev
+from .utilities import adev
 import copy
 
 

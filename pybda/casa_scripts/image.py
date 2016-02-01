@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """Make images using CASA."""
 
+
+from __future__ import absolute_import, print_function
 import numpy
-import math
 import shutil
 import os
 import time
 from os.path import join
 import json
-from bda import utilities
+
 
 def fov_to_cellsize(fov, im_size):
     """Obatin cellsize from fov and image size."""
@@ -29,13 +30,13 @@ def casa_image(ms, rootname, data_column, imsize, fov, ra0, dec0,
 
     cell = fov_to_cellsize(fov, imsize)  # arcsec
 
-    print '-' * 80
-    print '+ Size     : %i pixels' % (imsize[0])
-    print '+ FoV      : %.2f deg' % (fov[0])
-    print '+ Cellsize : %.4f arcsec' % (cell[0])
-    print '+ RA0      : %.4f deg' % (ra0)
-    print '+ Dec0     : %.4f deg' % (dec0)
-    print '-' * 80
+    print('-' * 80)
+    print('+ Size     : %i pixels' % (imsize[0]))
+    print('+ FoV      : %.2f deg' % (fov[0]))
+    print('+ Cellsize : %.4f arcsec' % (cell[0]))
+    print('+ RA0      : %.4f deg' % ra0)
+    print('+ Dec0     : %.4f deg' % dec0)
+    print('-' * 80)
 
     im.open(ms, usescratch=False, compress=False)
     im.defineimage(nx=imsize[0], ny=imsize[1], cellx='%.12farcsec' % cell[0],
@@ -48,10 +49,10 @@ def casa_image(ms, rootname, data_column, imsize, fov, ra0, dec0,
     im.weight(type=weighting)
     if w_planes:
         im.setoptions(ftmachine='wproject', wprojplanes=w_planes,
-                      gridfunction='SF', padding=1.2,
+                      gridfunction='SF', padding=1.0,
                       dopbgriddingcorrections=True, applypointingoffsets=False)
     else:
-        im.setoptions(ftmachine='ft', gridfunction='SF', padding=1.2,
+        im.setoptions(ftmachine='ft', gridfunction='SF', padding=1.0,
                       dopbgriddingcorrections=True, applypointingoffsets=False)
 
     dirty = rootname + '_dirty.img'
@@ -66,7 +67,7 @@ def casa_image(ms, rootname, data_column, imsize, fov, ra0, dec0,
         # MODEL_DATA column
         im.makeimage(image=dirty, type='model', verbose=False)
     else:
-        print 'ERROR: Unknown data column!'
+        print('ERROR: Unknown data column!')
         return
     im.close()
     ia.open(dirty)
@@ -111,15 +112,15 @@ def _run():
                         elif image['weighting'] == 'uniform':
                             image_name += '_u'
                         if not os.path.exists(image_name + '.fits'):
-                            print '+ Imaging: %s [%s] (%i)' % (ms, column, i)
+                            print('+ Imaging: %s [%s] (%i)' % (ms, column, i))
                             casa_image(ms, image_name,
                                        column, image['size'], image['fov_deg'],
                                        image['ra_deg'], image['dec_deg'],
                                        image['weighting'], image['w_planes'])
-                            print '*' * 80
-                            print '  - Finished imaging in %.3fs' % \
-                                  (time.time() - t0)
-                            print '*' * 80
+                            print('*' * 80)
+                            print('  - Finished imaging in %.3fs' % \
+                                  (time.time() - t0))
+                            print('*' * 80)
 
 if __name__ == '__main__':
     _run()

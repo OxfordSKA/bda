@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """Module to create corruptions."""
 
+from __future__ import print_function, absolute_import
+
 import numpy
 import shutil
 import os
 from os.path import join
 import time
 import pickle
-
-
-from bda.utilities import eval_complex_gain, byteify
+from pybda.utilities import eval_complex_gain, byteify
 import json
 
 
@@ -86,16 +86,16 @@ def fill_caltable(settings, cal_table, num_stations, num_times, time_range, dt,
     phase_sigma_wn = 0.0
     numpy.random.seed(settings['seed'])
     # ----------------------------------
-    print '-' * 60
-    print 'dt  = %f' % dt
-    print 'tau = %f' % tau
-    print 'obs. length = %f' % ((time_range[1] - time_range[0]) + dt)
-    print '-' * 60
+    print('-' * 60)
+    print('dt  = %f' % dt)
+    print('tau = %f' % tau)
+    print('obs. length = %f' % ((time_range[1] - time_range[0]) + dt))
+    print('-' * 60)
 
     smooth_gains = settings['smooth']
     window_length = settings['smooth_length']
     if smooth_gains:
-        print 'INFO: Smoothing gains with window length = %i' % window_length
+        print('INFO: Smoothing gains with window length = %i' % window_length)
     # TODO-BM 1. set all gains to 1+0j
     # TODO-BM 2. vary all gains no ref antenna and include smoothing (perhaps on the window length of the oversample?)
     all_gains = dict()
@@ -192,55 +192,55 @@ def main(config_file):
         shutil.rmtree(cal_table)
 
     t0 = time.time()
-    print '+ Coping simulated MS %s to %s ...' % (ms_in, ms_out)
+    print('+ Coping simulated MS %s to %s ...' % (ms_in, ms_out))
     shutil.copytree(ms_in, ms_out)
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
     t0 = time.time()
-    print '+ Creating scratch (CORRECTED_DATA & MODEL_DATA) columns in MS ...'
+    print('+ Creating scratch (CORRECTED_DATA & MODEL_DATA) columns in MS ...')
     scratch_columns_create(ms_out)
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
     t0 = time.time()
-    print '+ Copy DATA to MODEL_DATA ...'
+    print('+ Copy DATA to MODEL_DATA ...')
     copy_column(ms_out, 'DATA', 'MODEL_DATA')
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
     num_times, time_range, obs_length, dt = get_time_info(ms_out)
     num_stations = get_num_antennas(ms_out)
-    print '-' * 80
-    print '+ MS           : %s' % ms_out
-    print '+ Cal table    : %s' % cal_table
-    print '+ No. times    : %i' % num_times
-    print '+ Time range   : %f %f' % (time_range[0], time_range[1])
-    print '+ Obs. length  : %f' % obs_length
-    print '+ Delta t      : %f' % dt
-    print '+ No. stations : %i' % num_stations
-    print '-' * 80
-    print ''
+    print('-' * 80)
+    print('+ MS           : %s' % ms_out)
+    print('+ Cal table    : %s' % cal_table)
+    print('+ No. times    : %i' % num_times)
+    print('+ Time range   : %f %f' % (time_range[0], time_range[1]))
+    print('+ Obs. length  : %f' % obs_length)
+    print('+ Delta t      : %f' % dt)
+    print('+ No. stations : %i' % num_stations)
+    print('-' * 80)
+    print('')
 
     t0 = time.time()
-    print '+ Creating calibration table for corruptions ...'
+    print('+ Creating calibration table for corruptions ...')
     create_empty_caltable(ms_out, cal_table, num_times)
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
     t0 = time.time()
-    print '+ Filling calibration table with corruptions ...'
+    print('+ Filling calibration table with corruptions ...')
     fill_caltable(settings['corrupt'], cal_table, num_stations, num_times,
                   time_range, dt, settings['sim']['observation']['over_sample'])
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
     t0 = time.time()
-    print '+ Applying corruptions ...'
+    print('+ Applying corruptions ...')
     run_applycal(ms_out, cal_table)
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
     t0 = time.time()
-    print '+ Updating data column ...'
+    print('+ Updating data column ...')
     copy_column(ms_out, 'CORRECTED_DATA', 'DATA')
-    print '+ Done [%.3fs].\n' % (time.time() - t0)
+    print('+ Done [%.3fs].\n' % (time.time() - t0))
 
-    print '+ Applying corruptions took %.3f seconds' % (time.time() - tAll)
+    print('+ Applying corruptions took %.3f seconds' % (time.time() - tAll))
 
 
 if __name__ == "__main__":

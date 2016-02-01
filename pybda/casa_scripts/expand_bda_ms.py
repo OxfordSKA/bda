@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from bda import utilities
+from pybda import utilities
 import os
 from os.path import join
 import shutil

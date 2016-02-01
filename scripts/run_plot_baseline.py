@@ -11,10 +11,9 @@ import drivecasa
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Plot visibilities per '
-                                                 'baseline.',
-                                     epilog='')
-    parser.add_argument('sim_dir',
-                        type=str, nargs='?', help='Simulation directory.')
+                                                 'baseline.', epilog='')
+    parser.add_argument('sim_dir', type=str, nargs='?',
+                        help='Simulation directory.')
     args = parser.parse_args()
     if args.sim_dir is None:
         parser.print_usage()
