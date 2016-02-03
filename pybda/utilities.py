@@ -90,7 +90,7 @@ def eval_complex_gain(n, dt, amp_H, amp_adev_fbm, amp_sigma_wn,
 def byteify(input):
     """Convert unicode string."""
     if isinstance(input, dict):
-        return {byteify(key):byteify(value) for key,value in input.iteritems()}
+        return {byteify(key): byteify(value) for key, value in input.iteritems()}
     elif isinstance(input, list):
         return [byteify(element) for element in input]
     elif isinstance(input, unicode):
