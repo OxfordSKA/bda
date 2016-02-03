@@ -34,10 +34,12 @@ def stefcal1(a, b, tol=1.0e-8, niter=50, gstart=None):
         nit (int): number of iterations required.
         dg (float): convergence achieved.
     """
+    a = numpy.asarray(a)
+    b = numpy.asarray(b)
     n = a.shape[0]
 
     if gstart is not None:
-        g = gstart
+        g = numpy.asarray(gstart)
     else:
         g = numpy.ones(n, numpy.complex128)
 
