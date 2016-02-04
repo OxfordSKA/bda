@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, The University of Oxford
+/* Copyright (c) 2015-2016, The University of Oxford
    BDS 3-Clause license (see LICENSE) */
 #include <sys/time.h>
 #include <casacore/tables/Tables.h>
@@ -21,13 +21,14 @@ void copy_ms(const string& ms_in, const string& ms_out)
     const Table ms(ms_in);
     ms.deepCopy(ms_out, Table::New, false, Table::LittleEndian, true);
 
-    // Copy all the sub-tables with their data.
+    // Copy all the sub-tables with their data, except SORTED_TABLE.
     uInt num_fields = ms.keywordSet().description().nfields();
     for (uInt i = 0; i < num_fields; ++i)
     {
         if (ms.keywordSet().description().isTable(i))
         {
             string table_name = ms.keywordSet().description().name(i);
+            if (table_name == "SORTED_TABLE") continue;
             const Table sub_table(ms_in + "/" + table_name);
             sub_table.deepCopy(ms_out + "/" + table_name, Table::New, true,
                                Table::LittleEndian, false);
@@ -59,27 +60,26 @@ double inv_sinc(double value)
  */
 int main(int argc, char** argv)
 {
-    if (argc != 5)
+    if (argc != 6)
     {
         printf("Usage:\n");
-        printf("  ./bda <ms> <max_fact> <fov> <idt_max>\n\n");
+        printf("  ./bda <ms_in> <ms_out> <max_fact> <fov> <dt_max>\n\n");
         printf("Where:\n");
-        printf("  ms       Path of measurement set to be averaged.\n");
+        printf("  ms_in    Path of measurement set to be averaged.\n");
+        printf("  ms_out   Path of output measurement set.\n");
         printf("  max_fact Maximum amplitude reduction factor. (eg. 1.01)\n");
         printf("  fov      Field-of-view radius in degrees associated\n");
         printf("           with the amplitude reduction factor.\n");
-        printf("  idt_max  Maximum averaging time in terms of non-averaged\n");
-        printf("           correlator dumps.\n");
+        printf("  dt_max   Maximum averaging time in seconds.\n");
         printf("Example:\n");
-        printf("  ./bda vis.ms 1.01 0.9 4\n");
+        printf("  ./bda vis.ms vis_bda.ms 1.01 0.9 10.0\n");
         return 0;
     }
     string filename = string(argv[1]);
-    double max_fact = atof(argv[2]);
-    double fov = atof(argv[3]);
-    int dt_max_i = atoi(argv[4]);
-    string rootname = filename.substr(0, filename.find_last_of("."));
-    string filename_out = rootname + "_bda.ms";
+    string filename_out = string(argv[2]);
+    double max_fact = atof(argv[3]);
+    double fov = atof(argv[4]);
+    double dt_max = atof(argv[5]);
 
     // Create a total run time timer.
     struct timeval tmr[2];
@@ -155,7 +155,6 @@ int main(int argc, char** argv)
     // ------------------------------------------------------------------------
 
     // Evaluate averaging parameters.
-    double dt_max = dt_max_i * delta_t;
     double duvw_max = inv_sinc(1.0 / max_fact) / (fov * (M_PI / 180.0));
     duvw_max *= wavelength;
 
@@ -171,7 +170,6 @@ int main(int argc, char** argv)
     printf(" | + Output MS             : %s\n", filename_out.c_str());
     printf(" |   + max_fact            : %f\n", max_fact);
     printf(" |   + Field of view       : %f deg\n", fov);
-    printf(" |   + Maximum time        : %i dumps\n", dt_max_i);
     printf(" |   + Maximum time        : %.4f s\n", dt_max);
     printf(" |   + Maximum UVW distance: %f m\n", duvw_max);
     printf(" | %s\n", string(77, '-').c_str());
@@ -196,10 +194,25 @@ int main(int argc, char** argv)
         col_corrected_data_out.attach(ms_out, "CORRECTED_DATA");
 
     // Buffers of current and next UVW coordinates and times.
-    double* uvw_current  = (double*) calloc(num_baselines, 3 * sizeof(double));
-    double* uvw_next     = (double*) calloc(num_baselines, 3 * sizeof(double));
-    double* time_current = (double*) calloc(num_baselines, sizeof(double));
-    double* time_next    = (double*) calloc(num_baselines, sizeof(double));
+    IPosition len(1, num_baselines);
+    IPosition uvw_size(2, 3, num_baselines);
+    IPosition data_size(3, num_pols, 1, num_baselines);
+    Array<Double> uvw_current_(uvw_size);
+    Array<Double> uvw_next_(uvw_size);
+    Vector<Double> time_current_(len);
+    Vector<Double> time_next_(len);
+    double* uvw_current = uvw_current_.data();
+    double* uvw_next = uvw_next_.data();
+    double* time_current = time_current_.data();
+    double* time_next = time_next_.data();
+
+    // Buffers of current visibility data.
+    Array<Complex> data_(data_size);
+    Array<Complex> model_data_(data_size);
+    Array<Complex> corrected_data_(data_size);
+    const Complex* data = data_.data();
+    const Complex* model_data = model_data_.data();
+    const Complex* corrected_data = corrected_data_.data();
 
     // Buffers of deltas along the baseline in the current average.
     double* duvw         = (double*) calloc(num_baselines, sizeof(double));
@@ -229,37 +242,21 @@ int main(int argc, char** argv)
     Complex* bda_corrected_data_p = bda_corrected_data[0].data();
 
     // Read the first block of baseline coordinates.
-    {
-        IPosition start(1, 0), len(1, num_baselines);
-        Slicer rowRange(start, len);
-        Array<Double> uvw_ = col_uvw.getColumnRange(rowRange);
-        Array<Double> time_ = col_time.getColumnRange(rowRange);
-        memcpy(uvw_current, uvw_.data(), 3 * num_baselines * sizeof(double));
-        memcpy(time_current, time_.data(), num_baselines * sizeof(double));
-    }
+    Slicer row_range(IPosition(1, 0), len);
+    col_uvw.getColumnRange(row_range, uvw_current_);
+    col_time.getColumnRange(row_range, time_current_);
 
     // Do the averaging.
     int bda_row = 0;
     for (uInt t = 0; t < num_times; ++t) 
     {
-        Array<Complex> data_, model_data_, corrected_data_;
-        const Complex *data = 0, *model_data = 0, *corrected_data = 0;
-
         // Read the visibility data for the current time.
-        IPosition start(1, t * num_baselines), len(1, num_baselines);
-        Slicer rowRange(start, len);
-        data_ = col_data.getColumnRange(rowRange);
-        data = data_.data();
+        Slicer row_range(IPosition(1, t * num_baselines), len);
+        col_data.getColumnRange(row_range, data_);
         if (have_model_data)
-        {
-            model_data_ = col_model_data.getColumnRange(rowRange);
-            model_data = model_data_.data();
-        }
+            col_model_data.getColumnRange(row_range, model_data_);
         if (have_corrected_data)
-        {
-            corrected_data_ = col_corrected_data.getColumnRange(rowRange);
-            corrected_data = corrected_data_.data();
-        }
+            col_corrected_data.getColumnRange(row_range, corrected_data_);
 
         // Make sure the column dimension matches the number of polarisations.
         assert(col_data.shapeColumn()[0] == num_pols);
@@ -268,12 +265,9 @@ int main(int argc, char** argv)
         // Read the next block of baseline coordinates if it exists.
         if (t < num_times - 1)
         {
-            IPosition start(1, (t + 1) * num_baselines), len(1, num_baselines);
-            Slicer rowRange(start, len);
-            Array<Double> uvw_ = col_uvw.getColumnRange(rowRange);
-            Array<Double> time_ = col_time.getColumnRange(rowRange);
-            memcpy(uvw_next, uvw_.data(), 3 * num_baselines * sizeof(double));
-            memcpy(time_next, time_.data(), num_baselines * sizeof(double));
+            Slicer row_range(IPosition(1, (t + 1) * num_baselines), len);
+            col_uvw.getColumnRange(row_range, uvw_next_);
+            col_time.getColumnRange(row_range, time_next_);
         }
 
 #if 0
@@ -293,10 +287,11 @@ int main(int argc, char** argv)
                 double b_uu = uvw_current[b*3 + 0];
                 double b_vv = uvw_current[b*3 + 1];
                 double b_ww = uvw_current[b*3 + 2];
-                ave_t[b]  += time_current[b];
-                ave_uu[b] += b_uu;
-                ave_vv[b] += b_vv;
-                ave_ww[b] += b_ww;
+                ave_count[b] += 1;
+                ave_t[b]     += time_current[b];
+                ave_uu[b]    += b_uu;
+                ave_vv[b]    += b_vv;
+                ave_ww[b]    += b_ww;
                 for (int p = 0; p < num_pols; ++p)
                 {
                     uInt i = b * num_pols + p;
@@ -318,7 +313,6 @@ int main(int argc, char** argv)
                         ave_corrected_data[i] += corrected_data[i];
                     }
                 }
-                ave_count[b] += 1;
 
                 // Look ahead to the next point on the baseline and see if
                 // this is also in the average.
@@ -408,10 +402,6 @@ int main(int argc, char** argv)
     }
 
     // Clean up.
-    free(uvw_current);
-    free(uvw_next);
-    free(time_current);
-    free(time_next);
     free(duvw);
     free(dt);
     free(ave_t);
