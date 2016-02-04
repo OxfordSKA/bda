@@ -8,6 +8,7 @@ import matplotlib.pyplot as pyplot
 import numpy
 import time
 from scipy import interpolate
+import allantools
 
 
 def smooth(x, window_len=11, window='hanning'):
@@ -91,49 +92,41 @@ def test1():
     over_sample = 20
     n = num_times * over_sample  # Number of gain values (number of times)
     dt = dump_time / over_sample  # Time increment in data
-    samples = 3
+    samples = 10
     niter = 5
     tau = 1.0
     hurst0 = 0.5
     allan_dev0 = 1.0e-4
     sigma = 0.0
     d_hurst = 0.0
-    d_allan_dev = 0.0
-
-
+    d_allan_dev = 1.0e-4
 
     fig = pyplot.figure(figsize=(18, 12))
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
     colors = ['r', 'g', 'b', 'k', 'y', 'm']
     times = numpy.arange(n) * dt
+    tau_ = numpy.arange(2, num_times / 2, 2) * dt
+    amp_adev = numpy.empty_like(tau_)
 
     for i in range(niter):
         hurst = hurst0 + d_hurst * i
         allan_dev = allan_dev0 + d_allan_dev * i
         print('%-3i H=%.2f adev=%.2e' % (i, hurst, allan_dev))
-        gain_amp = eval_gain_amp(n, dt, hurst, allan_dev, sigma, tau)
-        gain_amp = gain_amp[0:n]
         for k in range(samples):
-            if k == 1:
-                gains = smooth(gain_amp, window_len=over_sample)
-                gain_amp = gains[0:n]
-            if k == 2:
-                gains = gain_amp[::over_sample/2]
-                tck = interpolate.splrep(times[::over_sample/2], gains, s=0)
-                ynew = interpolate.splev(times, tck, der=0)
-                # tck = interpolate.bisplrep(times[::over_sample], gains, s=0)
-                # ynew = interpolate.bisplev(times, tck, der=0)
-                gain_amp = ynew
-
-            tau_ = numpy.arange(2, num_times / 2, 2) * dt
-            amp_adev = numpy.zeros_like(tau_)
+            gain_amp = eval_gain_amp(n, dt, hurst, allan_dev, sigma, tau)
+            gain_amp = gain_amp[0:n]
+            gains = smooth(gain_amp, window_len=over_sample)
+            gain_amp = gains[0:n]
             for it, t in enumerate(tau_):
                 amp_adev[it], _, _ = adev(gain_amp, dt, t)
+                if i == 0 and k == 0 and it == 100:
+                    print(t, adev(gain_amp, dt, t))
+                    print(allantools.adev(gain_amp, 1./dt, t))
             ax1.plot(times, gain_amp, linestyle='-', marker='None',
-                     markersize=5, color=colors[k])
+                     markersize=5, color=colors[i])
             ax2.loglog(tau_, amp_adev, linestyle='-', marker='None',
-                       markersize=5, color=colors[k])
+                       markersize=5, color=colors[i])
             ax2.set_ylim(min(amp_adev.min(), ax2.get_ylim()[0]),
                          max(amp_adev.max(), ax2.get_ylim()[1]),)
         # ax1.grid()
