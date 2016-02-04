@@ -51,28 +51,22 @@ def stefcal1(a, b, tol=1.0e-8, niter=50, gstart=None):
 
     for i in range(niter):
         g_old = numpy.copy(g)
-        nit = niter
+        for j in range(n):
+            z = numpy.conj(g_old) * b[:, j]
+            g[j] = numpy.dot(numpy.conj(z), a[:, j]) / \
+                numpy.dot(numpy.conj(z), z)
         if i < 2:
-            for j in range(n):
-                z = numpy.conj(g_old) * b[:, j]
-                g[j] = numpy.dot(numpy.conj(z), a[:, j]) / \
-                    numpy.dot(numpy.conj(z), z)
             dg = numpy.linalg.norm(g - g_old) / numpy.linalg.norm(g)
             if dg <= tol:
                 nit = i
                 break
-        else:
-            for j in range(n):
-                z = numpy.conj(g_old) * b[:, j]
-                g[j] = numpy.dot(numpy.conj(z), a[:, j]) / \
-                    numpy.dot(numpy.conj(z), z)
-            if i % 2 == 1 and i > 0:
-                dg = numpy.linalg.norm(g - g_old) / numpy.linalg.norm(g)
-                if dg <= tol:
-                    nit = i
-                    break
-                else:
-                    g = f0 * g + f1 * g_old
+        else if i % 2 == 1:
+            dg = numpy.linalg.norm(g - g_old) / numpy.linalg.norm(g)
+            if dg <= tol:
+                nit = i
+                break
+            else:
+                g = f0 * g + f1 * g_old
 
     p = numpy.conj(g[0]) / numpy.abs(g[0])
     g = p * g
