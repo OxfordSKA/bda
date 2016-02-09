@@ -86,26 +86,26 @@ double inv_sinc(double value) {
  * - Handle MODEL_DATA and CORRECTED_DATA columns.
  */
 int main(int argc, char** argv) {
-    if (argc != 5) {
+    if (argc != 6) {
         cout << "Usage:" << endl;
-        cout << "  ./bda <ms> <max_fact> <fov> <idt_max>" << endl << endl;
+        cout << "  ./bda <ms_in> <ms_out> <max_fact> <fov> <idt_max>" << endl << endl;
         cout << "Where:" << endl;
-        cout << "  ms       Path of measurement set to be averaged." << endl;
+        cout << "  ms_in    Path of measurement set to be averaged." << endl;
+        cout << "  ms_out   Path of output measurement set." << endl;
         cout << "  max_fact Maximum amplitude reduction factor. (eg. 1.01)\n";
         cout << "  fov      Field-of-view radius in degrees associated\n";
         cout << "           with the amplitude reduction factor" << endl;
         cout << "  idt_max  Maximum averaging time in terms of non-averaged\n";
         cout << "           correlator dumps." << endl << endl;
         cout << "Example:" << endl;
-        cout << "  ./bda vis.ms 1.01 0.9 4" << endl;
+        cout << "  ./bda vis.ms vis_bda.ms 1.01 0.9 4" << endl;
         return 0;
     }
     string filename = string(argv[1]);
-    double max_fact = atof(argv[2]);
-    double fov = atof(argv[3]);
-    int dt_max_i = atoi(argv[4]);
-    string rootname = filename.substr(0, filename.find_last_of("."));
-    string filename_out = rootname+"_bda.ms";
+    string filename_out = string(argv[2]);
+    double max_fact = atof(argv[3]);
+    double fov = atof(argv[4]);
+    int dt_max_i = atoi(argv[5]);
 
     // Create a total run time timer.
     struct timeval timer_all[2];
