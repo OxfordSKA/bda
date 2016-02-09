@@ -7,8 +7,6 @@ from pybda.utilities import (adev, fbm, eval_complex_gain,
 import matplotlib.pyplot as pyplot
 import numpy
 import time
-from scipy import interpolate
-import allantools
 
 
 def smooth(x, window_len=11, window='hanning'):

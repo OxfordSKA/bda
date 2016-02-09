@@ -3,11 +3,12 @@
 
 from __future__ import (print_function, absolute_import)
 import numpy
+import time
 
 
 def allan_deviation(data, dt, tau):
     """
-    Allan deviation for of time series of values data and sample spacing dt.
+    Evaluate the Allan deviation of a time series.
 
     References:
         https://en.wikipedia.org/wiki/Allan_variance
@@ -88,19 +89,18 @@ def fractional_brownian_motion(n, hurst):
 
 def eval_complex_gains(n, dt, hurst_amp, adev_amp, std_t_mid_amp,
                        hurst_phase, adev_phase, std_t_mid_phase,
-                       smoothing_length=0, smoothing_window_type='hanning',
-                       tau=1.0):
+                       smoothing_length=0, tau=1.0):
     amp = fractional_brownian_motion(n, hurst_amp)
     if smoothing_length > 0:
-        amp = smooth(amp, smoothing_length, smoothing_window_type)
+        amp = smooth(amp, smoothing_length)
     amp *= adev_amp / allan_deviation(amp, dt, tau)[0]
-    amp += 1.0 - amp[n / 2] + numpy.random.randn() * std_t_mid_amp
+    amp += 1.0 - amp[n / 2] + (numpy.random.randn() * std_t_mid_amp)
 
     phase = fractional_brownian_motion(n, hurst_phase)
     if smoothing_length > 0:
-        phase = smooth(phase, smoothing_length, smoothing_window_type)
+        phase = smooth(phase, smoothing_length)
     phase *= adev_phase / allan_deviation(phase, dt, tau)[0]
-    phase += -phase[n / 2] + numpy.random.randn() * std_t_mid_phase
+    phase += -phase[n / 2] + (numpy.random.randn() * std_t_mid_phase)
 
     gain = amp * numpy.exp(1.0j * numpy.radians(phase))
     return gain
@@ -116,24 +116,24 @@ def allan_dev_spectrum(data, dt):
         adev_err[i] = allan_deviation(data, dt, tau)[0]
     return adev, tau_values, adev_err
 
-if __name__ == '__main__':
+
+def test_unblocked():
     import matplotlib.pyplot as pyplot
-    fig = pyplot.figure(figsize=(15, 10))
-    ax1 = fig.add_subplot(411)
-    ax2 = fig.add_subplot(412)
-    ax3 = fig.add_subplot(413)
-    ax4 = fig.add_subplot(414)
 
     tau = 1.0
-    hurst_amp = 0.7
-    adev_amp = 1.0e-2
-    std_t_mid_amp = 0.05
+    num_steps = 10
+    hurst_amp = 0.6
+    # Range of 1e-5, 1.0e-2 ? 10 steps?
+    # adev_amp = numpy.logspace(-5, -3, num_steps)
+    adev_amp = numpy.linspace(1.e-5, 1.e-3, num_steps)
+    std_t_mid_amp = 0.00
 
     hurst_phase = 0.7
-    adev_phase = 0.5
+    # Range of 0.05 to 2? 10 steps?
+    adev_phase = 0.05
     std_t_mid_phase = 2.0
 
-    num_times = 3000
+    num_times = 5000
     dump_time = 0.1
     over_sample = 10
 
@@ -141,31 +141,56 @@ if __name__ == '__main__':
     dt = dump_time / float(over_sample)
     times = numpy.arange(n) * dt
 
-    for i in range(5):
-        gains = eval_complex_gains(n, dt, hurst_amp, adev_amp, std_t_mid_amp,
-                                   hurst_phase, adev_phase, std_t_mid_phase,
-                                   smoothing_length=over_sample, tau=tau)
+    print('No. samples = %i' % n)
+    print('No. steps = %i' % num_steps)
 
-        ax1.plot(times, numpy.degrees(numpy.angle(gains)), '.-')
-        s, t, _ = allan_dev_spectrum(numpy.angle(gains), dt)
-        ax2.plot(t, numpy.degrees(s))
+    gains = numpy.empty((num_steps, n), dtype='c16')
+
+    t0 = time.time()
+    for i in range(num_steps):
+        print('%i %e' % (i, adev_amp[i]))
+        gains[i, :] = eval_complex_gains(n, dt, hurst_amp, adev_amp[i],
+                                         std_t_mid_amp,
+                                         hurst_phase, adev_phase,
+                                         std_t_mid_phase,
+                                         smoothing_length=over_sample,
+                                         tau=tau)
+
+    print('Time taken to generate gains = %.3f s' % (time.time() - t0))
+
+    fig = pyplot.figure(figsize=(15, 10))
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    # ax3 = fig.add_subplot(413)
+    # ax4 = fig.add_subplot(414)
+
+    print('plotting ...')
+    for i in range(num_steps):
+        # ax1.plot(times, numpy.degrees(numpy.angle(gains[i, :])), '.-')
+        # s, t, _ = allan_dev_spectrum(numpy.angle(gains[i, :]), dt)
+        # ax2.plot(t, numpy.degrees(s))
+        # ax2.set_xlim(0, tau * 3.0)
+        # ax2.set_ylim(0, numpy.degrees(s[numpy.argmax(t > tau * 3.0)]))
+        ax1.plot(times, numpy.abs(gains[i, :]), '-')
+        s, t, _ = allan_dev_spectrum(numpy.abs(gains[i, :]), dt)
+        ax2.plot(t, s)
         ax2.set_xlim(0, tau * 3.0)
-        ax2.set_ylim(0, numpy.degrees(s[numpy.argmax(t > tau * 3.0)]))
+        ax2.set_ylim(0, s[numpy.argmax(t > tau * 3.0)])
 
-        ax3.plot(times, numpy.abs(gains), '.-')
-        s, t, _ = allan_dev_spectrum(numpy.abs(gains), dt)
-        ax4.plot(t, s)
-        ax4.set_xlim(0, tau * 3.0)
-        ax4.set_ylim(0, s[numpy.argmax(t > tau * 3.0)])
-
+    # ax1.grid()
+    # ax1.set_title('phase', fontsize='x-small')
+    # ax2.grid()
+    # ax2.set_title('phase allan spectrum', fontsize='x-small')
     ax1.grid()
-    ax1.set_title('phase', fontsize='x-small')
+    ax1.set_title('amp', fontsize='x-small')
     ax2.grid()
-    ax2.set_title('phase allan spectrum', fontsize='x-small')
-    ax3.grid()
-    ax3.set_title('amp', fontsize='x-small')
-    ax4.grid()
-    ax4.set_title('amp allan spectrum', fontsize='x-small')
+    ax2.set_title('amp allan spectrum', fontsize='x-small')
     # ax.plot(ax.get_xlim(), [1.0, 1.0], 'r--')
     # ax.plot([n/2, n/2], ax.get_ylim(), 'r--')
+    print('plot show() ...')
     pyplot.show()
+
+
+if __name__ == '__main__':
+    test_unblocked()
+
