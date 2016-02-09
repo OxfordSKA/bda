@@ -9,6 +9,7 @@ import math
 import numpy
 import time
 import matplotlib.pyplot as pyplot
+import oskar
 
 
 if __name__ == '__main__':
@@ -28,10 +29,17 @@ if __name__ == '__main__':
     num_times = int(obs_length_s / dt_s)
     print('- num times', num_times)
 
-    # TODO convert source ra, dec to l, m, n
-    l = math.sin(math.radians(1.0))
-    m = 0.0
-    n = (1 - l**2 - m**2)**0.5
+    # Convert source RA, Dec to l, m, n
+    d_ra = source_ra - ra
+    cos_d_ra = numpy.cos(d_ra)
+    sin_d_ra = numpy.sin(d_ra)
+    cos_dec  = numpy.cos(source_dec)
+    sin_dec  = numpy.sin(source_dec)
+    cos_dec0 = math.cos(dec)
+    sin_dec0 = math.sin(dec)
+    l = cos_dec * sin_d_ra
+    m = cos_dec0 * sin_dec - sin_dec0 * cos_dec * cos_d_ra
+    n = sin_dec0 * sin_dec + cos_dec0 * cos_dec * cos_d_ra
 
     telescope_model = join('../models', 'ska1_meerkat_mid_combined_july_2015.tm')
     x, y, z = load_station_coords(join(telescope_model, 'layout.txt'))
@@ -64,8 +72,18 @@ if __name__ == '__main__':
     t0 = time.time()
     wavelength = 299792458.0 / freq_hz
     k = 2.0 * math.pi / wavelength
-    amp = numpy.exp(1.0j * k * (uu * l + vv * m + ww * n))
+    amp = numpy.exp(1.0j * k * (uu * l + vv * m + ww * (n - 1.0)))
     print('- Time taken to generate amplitudes = %.3fs' % (time.time() - t0))
+
+    # Make image.
+    t0 = time.time()
+    im = oskar.image.make(uu/wavelength, vv/wavelength, ww/wavelength, \
+        amp, 2.0, 4096)
+    print('- Time taken to generate image = %.3fs' % (time.time() - t0))
+    fig = pyplot.figure()
+    ax = fig.add_subplot(111)
+    ax.imshow(im)
+    pyplot.show()
 
     uv_dist = (uu**2 + vv**2)**0.5
     x = uv_dist[::100]
