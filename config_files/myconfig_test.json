@@ -1,28 +1,15 @@
 {
   "path": "TEST_gains_low_bda",
 
-  "ms_name": {
-    "model": "model",
-    "corrupted": "corrupted",
-    "calibrated": "calibrated"
-  },
-
-  "ms_modifier":{
-    "reference": "ref",
-    "sub_sampled": "sub_sampled",
-    "noisy": "noisy",
-    "bda": "bda",
-    "expanded": "expanded"
-  },
-
   "sim":
   {
-    "sky_file": "sky.osm",
+    "sky_file": "models/sky.osm",
     "telescope":
     {
       "path": "models/ska1_meerkat_mid_combined_july_2015.tm",
       "lon_deg": 21.442909,
-      "lat_deg": -30.739475
+      "lat_deg": -30.739475,
+      "alt_m": 0.0
     },
     "observation":
     {
@@ -33,9 +20,9 @@
       "__comment": "65536 channels over 700e6 Hz band",
       "__channel_bw_hz": 10.7e3,
       "start_time_mjd": 57086.113194,
-      "dt_s": 0.1,
-      "num_times": 50,
-      "over_sample": 20
+      "dump_time_s": 0.1,
+      "num_times": 60,
+      "over_sample": 10
     }
   },
 
@@ -46,34 +33,21 @@
                   "use a smaller tau value?"],
     "tau_s": 1.0,
     "seed": 1,
-    "smooth": false,
-    "smooth_length": 40,
+    "smoothing_length": 20,
     "amplitude":
     {
-      "std_t0": 0.005,
-      "hurst": 0.8,
-      "allan_var": 1.0e-4
+      "hurst": 0.55,
+      "allan_dev": 0.0,
+      "std_t_mid": 0.00
     },
     "phase":
     {
-      "std_t0": 15.0,
-      "hurst": 0.8,
-      "allan_var": 0.2
+      "hurst": 0.55,
+      "allan_dev": 30.0,
+      "std_t_mid": 5.0
     }
   },
 
-  "noise":
-  {
-    "seed": 1,
-    "__noise_rms_jy": 10.0,
-    "noise_rms_jy": 0.2
-  },
-
-  "calibration":
-  {
-    "output_ms": "calibrated",
-    "interval": 1.0
-  },
 
   "baseline_average":
   {
@@ -85,35 +59,40 @@
 
   "imaging":
   {
-    "overwrite": true,
     "__comment": "array of dictionaries defining images to make",
     "images": [
       {
-        "__comment": "image in direction of source",
-        "weighting": "uniform",
-        "size": [512, 512],
-        "fov_deg": [0.01, 0.01],
-        "ra_deg": -90.35458487600000,
-        "dec_deg": -7.67112399060000,
-        "w_planes": 0,
-        "label": "0"
+        "description": "Full sky image",
+        "filename": "full.fits",
+        "type": "data",
+        "size": 2048,
+        "fov_deg": 2.0
       },
       {
-        "__comment": "image in direction of phase centre",
-        "weighting": "uniform",
-        "size": [512, 512],
-        "fov_deg": [0.01, 0.01],
-        "ra_deg": -90.3545848760,
-        "dec_deg": -8.5711239906,
-        "w_planes": 0,
-        "label": "1"
+        "description": "Model image in direction of source",
+        "type": "model",
+        "size": 2048,
+        "fov_deg": 0.1,
+        "ra_deg": -90.35458487600000,
+        "dec_deg": -7.67112399060000
+      },
+      {
+        "description": "Dirty (data) image in direction of source",
+        "type": "data",
+        "size": 2048,
+        "fov_deg": 0.1,
+        "ra_deg": -90.35458487600000,
+        "dec_deg": -7.67112399060000
+      },
+      {
+        "description": "Calibrated image in direction of source",
+        "type": "corrected",
+        "size": 2048,
+        "fov_deg": 0.1,
+        "ra_deg": -90.35458487600000,
+        "dec_deg": -7.67112399060000
       }
-    ],
-    "columns": {
-      "model": ["DATA"],
-      "corrupted": ["DATA"],
-      "calibrated": ["DATA", "CORRECTED_DATA", "MODEL_DATA"]
-    }
+    ]
   },
 
   "plotting":

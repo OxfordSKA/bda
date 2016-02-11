@@ -4,6 +4,7 @@
 from __future__ import (print_function, absolute_import)
 import numpy
 import time
+import os
 
 
 def allan_deviation(data, dt, tau):
@@ -121,21 +122,20 @@ def test_unblocked():
     import matplotlib.pyplot as pyplot
 
     tau = 1.0
-    num_steps = 10
-    hurst_amp = 0.6
-    # Range of 1e-5, 1.0e-2 ? 10 steps?
-    # adev_amp = numpy.logspace(-5, -3, num_steps)
+    num_steps = 6
+    num_antennas = 50
+    hurst_amp = 0.55
     adev_amp = numpy.linspace(1.e-5, 1.e-3, num_steps)
-    std_t_mid_amp = 0.00
+    std_t_mid_amp = 0.05
 
-    hurst_phase = 0.7
-    # Range of 0.05 to 2? 10 steps?
-    adev_phase = 0.05
-    std_t_mid_phase = 2.0
+    hurst_phase = 0.55
+    adev_phase = numpy.linspace(0.01, 0.2, num_steps)
+    std_t_mid_phase = 5.0
 
     num_times = 5000
     dump_time = 0.1
     over_sample = 10
+    smoothing_length = over_sample * 3
 
     n = num_times * over_sample
     dt = dump_time / float(over_sample)
@@ -144,51 +144,87 @@ def test_unblocked():
     print('No. samples = %i' % n)
     print('No. steps = %i' % num_steps)
 
-    gains = numpy.empty((num_steps, n), dtype='c16')
+    gains = numpy.empty((num_steps, num_antennas, n), dtype='c16')
 
     t0 = time.time()
     for i in range(num_steps):
         print('%i %e' % (i, adev_amp[i]))
-        gains[i, :] = eval_complex_gains(n, dt, hurst_amp, adev_amp[i],
-                                         std_t_mid_amp,
-                                         hurst_phase, adev_phase,
-                                         std_t_mid_phase,
-                                         smoothing_length=over_sample,
-                                         tau=tau)
+        for a in range(num_antennas):
+            gains[i, a, :] = eval_complex_gains(n, dt, hurst_amp, adev_amp[i],
+                                                std_t_mid_amp,
+                                                hurst_phase, adev_phase[i],
+                                                std_t_mid_phase,
+                                                smoothing_length,
+                                                tau)
 
     print('Time taken to generate gains = %.3f s' % (time.time() - t0))
 
-    fig = pyplot.figure(figsize=(15, 10))
+    fig = pyplot.figure(figsize=(7, 7))
+    fig.subplots_adjust(left=0.15, bottom=0.1, right=0.95, top=0.95,
+                        hspace=0.2, wspace=0.0)
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
-    # ax3 = fig.add_subplot(413)
-    # ax4 = fig.add_subplot(414)
 
+    colors = ['r', 'g', 'b', 'm', 'y', 'k']
     print('plotting ...')
+    y_max = 0.0
     for i in range(num_steps):
-        # ax1.plot(times, numpy.degrees(numpy.angle(gains[i, :])), '.-')
-        # s, t, _ = allan_dev_spectrum(numpy.angle(gains[i, :]), dt)
-        # ax2.plot(t, numpy.degrees(s))
-        # ax2.set_xlim(0, tau * 3.0)
-        # ax2.set_ylim(0, numpy.degrees(s[numpy.argmax(t > tau * 3.0)]))
-        ax1.plot(times, numpy.abs(gains[i, :]), '-')
-        s, t, _ = allan_dev_spectrum(numpy.abs(gains[i, :]), dt)
-        ax2.plot(t, s)
-        ax2.set_xlim(0, tau * 3.0)
-        ax2.set_ylim(0, s[numpy.argmax(t > tau * 3.0)])
+        for a in range(num_antennas):
+            if i == num_steps - 1:
+                ax1.plot(times, numpy.abs(gains[i, a, :]), '-', color=colors[i])
+            s, t, _ = allan_dev_spectrum(numpy.abs(gains[i, a, :]), dt)
+            ax2.semilogy(t, s, color=colors[i])
+            ax2.set_xlim(0, tau * 3.0)
+            y_max = max(y_max, s[numpy.argmax(t > tau * 3.0)])
+            ax2.set_ylim(0, y_max * 1.05)
 
-    # ax1.grid()
-    # ax1.set_title('phase', fontsize='x-small')
-    # ax2.grid()
-    # ax2.set_title('phase allan spectrum', fontsize='x-small')
+    y_max = numpy.max(gains[num_steps-1, :, :])
+    print(numpy.abs(y_max))
+
     ax1.grid()
-    ax1.set_title('amp', fontsize='x-small')
+    ax1.set_xlabel('Observation length [seconds]', fontsize='small')
+    ax1.set_ylabel('Gain amplitude', fontsize='small')
     ax2.grid()
-    ax2.set_title('amp allan spectrum', fontsize='x-small')
-    # ax.plot(ax.get_xlim(), [1.0, 1.0], 'r--')
-    # ax.plot([n/2, n/2], ax.get_ylim(), 'r--')
-    print('plot show() ...')
-    pyplot.show()
+    ax2.set_ylabel('Allan deviation', fontsize='small')
+    ax2.set_xlabel('Sample period, tau [seconds]', fontsize='small')
+    if os.path.isfile('gain_amp.png'):
+        os.remove('gain_amp.png')
+    pyplot.savefig('gain_amp.png')
+
+    # =========================================================================
+    fig = pyplot.figure(figsize=(7, 7))
+    fig.subplots_adjust(left=0.15, bottom=0.1, right=0.95, top=0.95,
+                        hspace=0.2, wspace=0.0)
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+
+    colors = ['r', 'g', 'b', 'm', 'y', 'k']
+    print('plotting ...')
+    y_max = 0.0
+    for i in range(num_steps):
+        for a in range(num_antennas):
+            if i == num_steps - 1:
+                ax1.plot(times, numpy.degrees(numpy.angle(gains[i, a, :])),
+                         '-', color=colors[i])
+            s, t, _ = allan_dev_spectrum(
+                numpy.degrees(numpy.angle(gains[i, a, :])), dt)
+            ax2.semilogy(t, s, color=colors[i])
+            ax2.set_xlim(0, tau * 3.0)
+            y_max = max(y_max, s[numpy.argmax(t > tau * 3.0)])
+            ax2.set_ylim(0, y_max * 1.05)
+
+    y_max = numpy.max(gains[num_steps-1, :, :])
+    print(numpy.abs(y_max))
+
+    ax1.grid()
+    ax1.set_xlabel('Observation length [seconds]', fontsize='small')
+    ax1.set_ylabel('Gain phase', fontsize='small')
+    ax2.grid()
+    ax2.set_ylabel('Allan deviation', fontsize='small')
+    ax2.set_xlabel('Sample period, tau [seconds]', fontsize='small')
+    if os.path.isfile('gain_phase.png'):
+        os.remove('gain_phase.png')
+    pyplot.savefig('gain_phase.png')
 
 
 if __name__ == '__main__':

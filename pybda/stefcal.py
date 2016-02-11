@@ -60,7 +60,7 @@ def stefcal1(a, b, tol=1.0e-8, niter=50, gstart=None):
             if dg <= tol:
                 nit = i
                 break
-        else if i % 2 == 1:
+        elif i % 2 == 1:
             dg = numpy.linalg.norm(g - g_old) / numpy.linalg.norm(g)
             if dg <= tol:
                 nit = i
