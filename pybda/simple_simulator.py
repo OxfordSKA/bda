@@ -28,21 +28,20 @@ def convert_ra_dec_to_relative_directions(ra, dec, ra0, dec0):
 
 
 def generate_baseline_uvw(x, y, z, ra_rad, dec_rad, num_times, num_baselines,
-                          freq_hz, mjd_start, dt_s):
+                          mjd_start, dt_s):
     num_coords = num_times * num_baselines
     uu = numpy.zeros(num_coords, dtype='f8')
     vv = numpy.zeros(num_coords, dtype='f8')
     ww = numpy.zeros(num_coords, dtype='f8')
-    wavelength = 299792458.0 / freq_hz
     for i in range(num_times):
         t = i * dt_s + dt_s / 2.0
         mjd = mjd_start + (t / 86400.0)
         i0 = i * num_baselines
         i1 = i0 + num_baselines
         uu_, vv_, ww_ = evaluate_baseline_uvw(x, y, z, ra_rad, dec_rad, mjd)
-        uu[i0:i1] = uu_ / wavelength
-        vv[i0:i1] = vv_ / wavelength
-        ww[i0:i1] = ww_ / wavelength
+        uu[i0:i1] = uu_
+        vv[i0:i1] = vv_
+        ww[i0:i1] = ww_
     return uu, vv, ww
 
 
@@ -91,16 +90,18 @@ def simulate(config):
         raise RuntimeError('Not enough system memory for requested '
                            'simulation.')
 
-    # Generate actual UVW coordinates in wavelengths.
+    # Generate UVW coordinates.
     t0 = time.time()
     uu, vv, ww = generate_baseline_uvw(x, y, z, vis_ra, vis_dec, num_times,
-                                       num_baselines, freq_hz, mjd_start, dt_s)
+                                       num_baselines, mjd_start, dt_s)
     t_coords = time.time() - t0
 
     # Generate amplitudes.
     t1 = time.time()
+    wavelength = 299792458.0 / freq_hz
     for i in range(len(l)):
-        phase = 2.0 * math.pi * (uu * l[i] + vv * m[i] + ww * (n[i] - 1.0))
+        phase = (2.0 * math.pi / wavelength) * \
+                (uu * l[i] + vv * m[i] + ww * (n[i] - 1.0))
         amp += numpy.exp(1.0j * phase)
     t_amp = time.time() - t1
     print('  - Total simulation time = %.2f s (coords: %.2f s, amp: %.2f s)'
@@ -229,8 +230,7 @@ def simulate_2(config):
         data[b0:b1] = numpy.mean(block_data, axis=0)
 
     uu, vv, ww = generate_baseline_uvw(x, y, z, ra, dec, num_dumps,
-                                       num_baselines, freq_hz, mjd_start,
-                                       dump_time_s)
+                                       num_baselines, mjd_start, dump_time_s)
 
     print('  - Visibilities simulated in %.2f s' % (time.time() - t1))
 
