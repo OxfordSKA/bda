@@ -43,6 +43,29 @@
     "phase":
     {
       "hurst": 0.55,
+      "allan_dev": 0.0,
+      "std_t_mid": 0.0
+    }
+  },
+
+
+  "corrupt_orig":
+  {
+    "gain_table": "corrupted",
+    "__comment": ["for more stable gains in short simulations",
+                  "use a smaller tau value?"],
+    "tau_s": 1.0,
+    "seed": 1,
+    "smoothing_length": 20,
+    "amplitude":
+    {
+      "hurst": 0.55,
+      "allan_dev": 0.0,
+      "std_t_mid": 0.00
+    },
+    "phase":
+    {
+      "hurst": 0.55,
       "allan_dev": 30.0,
       "std_t_mid": 5.0
     }
@@ -51,10 +74,9 @@
 
   "baseline_average":
   {
-    "method": "mstransform",
-    "idt_max": 2,
     "max_fact": 1.002,
-    "fov_radius_deg": 0.9
+    "fov_radius_deg": 0.9,
+    "max_average_time_s": 15.0
   },
 
   "imaging":
@@ -62,35 +84,16 @@
     "__comment": "array of dictionaries defining images to make",
     "images": [
       {
-        "description": "Full sky image",
-        "filename": "full.fits",
-        "type": "data",
-        "size": 2048,
-        "fov_deg": 2.0
-      },
-      {
-        "description": "Model image in direction of source",
-        "type": "model",
+        "description": "Image in direction of source",
         "size": 2048,
         "fov_deg": 0.1,
         "ra_deg": -90.35458487600000,
         "dec_deg": -7.67112399060000
       },
       {
-        "description": "Dirty (data) image in direction of source",
-        "type": "data",
+        "description": "Image at phase centre",
         "size": 2048,
-        "fov_deg": 0.1,
-        "ra_deg": -90.35458487600000,
-        "dec_deg": -7.67112399060000
-      },
-      {
-        "description": "Calibrated image in direction of source",
-        "type": "corrected",
-        "size": 2048,
-        "fov_deg": 0.1,
-        "ra_deg": -90.35458487600000,
-        "dec_deg": -7.67112399060000
+        "fov_deg": 0.1
       }
     ]
   },

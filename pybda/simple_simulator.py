@@ -72,19 +72,20 @@ def simulate(config):
     l, m, n = convert_ra_dec_to_relative_directions(sky[:, 0], sky[:, 1],
                                                     vis_ra, vis_dec)
     amp = numpy.zeros(num_vis, dtype='c16')
+    weight = numpy.ones(num_vis, dtype='f8')
 
-    print('- Simple simulator.')
-    print('  - No. antennas  =', num_antennas)
-    print('  - No. baselines =', num_baselines)
-    print('  - Obs. length   = %.1f s' % (num_dumps * dump_time_s))
-    print('  - No. times     = %i (no. dumps: %i, over-sample: %i)' %
+    print('- Simulating data...')
+    print('  - No. antennas  :', num_antennas)
+    print('  - No. baselines :', num_baselines)
+    print('  - Obs. length   : %.1f s' % (num_dumps * dump_time_s))
+    print('  - No. times     : %i (no. dumps: %i, over-sample: %i)' %
           (num_times, num_dumps, over_sample))
-    print('  - No. vis       =', num_vis)
-    print('  - No. sources   =', sky.shape[0])
+    print('  - No. vis       :', num_vis)
+    print('  - No. sources   :', sky.shape[0])
 
     num_bytes = num_vis * 7 * 8
     mem = virtual_memory()
-    print('  - Memory required = %.1f / %.1f MB' %
+    print('  - Mem. required : %.1f / %.1f MB' %
           (num_bytes / 1024.0**2, mem.total / 1024.0**2))
     if num_bytes >= mem.total:
         raise RuntimeError('Not enough system memory for requested '
@@ -107,7 +108,7 @@ def simulate(config):
     print('  - Total simulation time = %.2f s (coords: %.2f s, amp: %.2f s)'
           % (time.time() - t0, t_coords, t_amp))
 
-    return {'model': amp, 'uu': uu, 'vv': vv, 'ww': ww}
+    return {'model': amp, 'uu': uu, 'vv': vv, 'ww': ww, 'weight': weight}
 
 
 def simulate_2(config):
@@ -154,21 +155,21 @@ def simulate_2(config):
     std_t_mid_phase = corrupt['phase']['std_t_mid']
     smoothing_length = corrupt['smoothing_length']
 
-    print('- Simple simulator.')
-    print('  - No. antennas  =', num_antennas)
-    print('  - No. baselines =', num_baselines)
-    print('  - Obs. length   = %.1f s' % (num_dumps * dump_time_s))
-    print('  - No. times     = %i (no. dumps: %i, over-sample: %i)' %
+    print('- Simulating data...')
+    print('  - No. antennas  :', num_antennas)
+    print('  - No. baselines :', num_baselines)
+    print('  - Obs. length   : %.1f s' % (num_dumps * dump_time_s))
+    print('  - No. times     : %i (no. dumps: %i, over-sample: %i)' %
           (num_times, num_dumps, over_sample))
-    print('  - No. vis       =', num_vis)
-    print('  - No. sources   =', num_sources)
+    print('  - No. vis       :', num_vis)
+    print('  - No. sources   :', num_sources)
     print('  - Corruptions:')
     print('    -  Hurst amp %.1f, phase %.1f' % (hurst_amp, hurst_phase))
     print('    -  A. dev amp %.1e, phase %.1e' % (adev_amp, adev_phase))
 
     num_bytes = num_vis * 8 * 7 + (num_antennas * num_times) * 16
     mem = virtual_memory()
-    print('  - Mem. required = %.1f / %.1f MB' %
+    print('  - Mem. required : %.1f / %.1f MB' %
           (num_bytes / 1024.0**2, mem.total / 1024.0**2))
     if num_bytes >= mem.total:
         raise RuntimeError('Not enough system memory for requested '
@@ -191,6 +192,7 @@ def simulate_2(config):
     phase0 = 2.0 * math.pi / wavelength
     model = numpy.empty(num_vis, dtype='c16')
     data = numpy.empty(num_vis, dtype='c16')
+    weight = numpy.ones(num_vis, dtype='f8')
     block_model = numpy.empty((over_sample, num_baselines), dtype='c16')
     block_data = numpy.empty((over_sample, num_baselines), dtype='c16')
     t1 = time.time()
@@ -235,7 +237,7 @@ def simulate_2(config):
     print('  - Visibilities simulated in %.2f s' % (time.time() - t1))
 
     return {'model': model, 'data': data, 'uu': uu, 'vv': vv, 'ww': ww,
-            'num_baselines': num_baselines, 'num_times': num_dumps,
-            'num_antennas': num_antennas}
+            'weight': weight, 'num_baselines': num_baselines,
+            'num_times': num_dumps, 'num_antennas': num_antennas}
 
 

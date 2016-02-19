@@ -7,7 +7,8 @@ import numpy
 import time
 
 
-def calibrate(vis, verbose=False):
+def run_calibrate(vis, verbose=False):
+    print('- Calibrating data...')
     num_baselines = vis['num_baselines']
     num_antennas = vis['num_antennas']
     corrected = numpy.zeros_like(vis['data'])
@@ -23,5 +24,5 @@ def calibrate(vis, verbose=False):
         if verbose:
             print(i, nit, dg)
     vis['corrected'] = corrected
-    print('- Calibration took %.2f s' % (time.time() - t0))
+    print('  - Calibration took %.2f s' % (time.time() - t0))
 

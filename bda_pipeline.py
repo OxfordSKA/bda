@@ -7,9 +7,8 @@ import os
 import argparse
 from os.path import join
 from shutil import copyfile
-from pybda import simple_simulator, imager
+from pybda import simple_simulator, imager, bda, calibrate
 import matplotlib.pyplot as pyplot
-from pybda.calibrate import calibrate
 import numpy
 import time
 
@@ -36,45 +35,57 @@ def main(config_file):
     # TODO-BM: BDA / expand (vis: model, data)
 
     # Calibrate the visibilities with StefCal
-    calibrate(vis)
+    #calibrate.run_calibrate(vis)
 
-    # TODO-BM: BDA
+    # Run BDA
+    ave_data = bda.run_bda(config, vis, 'data')
 
     # Image visibilities
     # print('xx', len(config['imaging']['images']))
-    model = imager.make_image(config, vis, image_id=1)
-    dirty = imager.make_image(config, vis, image_id=2)
-    corrected = imager.make_image(config, vis, image_id=3)
-    diff_model_dirty = model - dirty
-    diff_model_corrected = model - corrected
+    model_images = imager.run_imager(config, vis, 'model')
+    dirty_images = imager.run_imager(config, vis, 'data')
+    #corrected = imager.run_imager(config, vis, 'corrected')
+    #bda_model_images = imager.run_imager(config, ave_model, 'data')
+    bda_dirty_images = imager.run_imager(config, ave_data, 'data')
+    #bda_corrected = imager.run_imager(config, ave_model, 'corrected')
+    diff_model_dirty = []
+    for model, dirty in zip(model_images, dirty_images):
+        diff_model_dirty.append(model - dirty)
+    diff_data_bda_non_bda = []
+    for dirty, bda_dirty in zip(dirty_images, bda_dirty_images):
+        diff_data_bda_non_bda.append(dirty - bda_dirty)
+    #diff_model_corrected = model - corrected
 
-    fig = pyplot.figure(figsize=(20, 12))
-    ax = fig.add_subplot(231)
-    im1 = ax.imshow(model, interpolation='nearest')
-    ax.figure.colorbar(im1, ax=ax)
-    ax.set_title('model')
+    # for i in range(len(model_images)):
+    for i in range(1):
 
-    ax = fig.add_subplot(232)
-    im2 = ax.imshow(dirty, interpolation='nearest')
-    ax.figure.colorbar(im2, ax=ax)
-    ax.set_title('dirty')
+        fig = pyplot.figure(figsize=(16, 8))
+        ax = fig.add_subplot(231)
+        im1 = ax.imshow(model_images[i], interpolation='nearest')
+        ax.figure.colorbar(im1, ax=ax)
+        ax.set_title('model')
 
-    ax = fig.add_subplot(233)
-    im3 = ax.imshow(corrected, interpolation='nearest')
-    ax.figure.colorbar(im3, ax=ax)
-    ax.set_title('corrected')
+        ax = fig.add_subplot(232)
+        im2 = ax.imshow(dirty_images[i], interpolation='nearest')
+        ax.figure.colorbar(im2, ax=ax)
+        ax.set_title('dirty')
 
-    ax = fig.add_subplot(234)
-    im4 = ax.imshow(diff_model_dirty, interpolation='nearest')
-    ax.figure.colorbar(im4, ax=ax)
-    ax.set_title('model - dirty')
+        ax = fig.add_subplot(233)
+        im3 = ax.imshow(bda_dirty_images[i], interpolation='nearest')
+        ax.figure.colorbar(im3, ax=ax)
+        ax.set_title('BDA')
 
-    ax = fig.add_subplot(235)
-    im5 = ax.imshow(diff_model_corrected, interpolation='nearest')
-    ax.figure.colorbar(im5, ax=ax)
-    ax.set_title('model - corrected')
+        ax = fig.add_subplot(234)
+        im4 = ax.imshow(diff_model_dirty[i], interpolation='nearest')
+        ax.figure.colorbar(im4, ax=ax)
+        ax.set_title('model - dirty')
 
-    pyplot.show()
+        ax = fig.add_subplot(235)
+        im5 = ax.imshow(diff_data_bda_non_bda[i], interpolation='nearest')
+        ax.figure.colorbar(im5, ax=ax)
+        ax.set_title('dirty - BDA dirty')
+
+        pyplot.show()
 
 
 
