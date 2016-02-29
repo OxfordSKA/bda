@@ -7,7 +7,7 @@ import os
 import argparse
 from os.path import join
 from shutil import copyfile
-from pybda import simple_simulator, imager, bda, calibrate
+from pybda import simple_simulator, imager, bda, calibrate, expand_bda
 import matplotlib.pyplot as pyplot
 import numpy
 import time
@@ -32,16 +32,18 @@ def main(config_file):
     # Simulate visibilities
     vis = simple_simulator.simulate_2(config)
 
-    # TODO-BM: BDA / expand (vis: model, data)
+    # Run initial BDA (compress) and overwrite the original data (expand).
+    ave_data1 = bda.run_bda(config, vis, 'data')
+    expand_bda.run_expand_bda(vis['num_antennas'], 
+        ave_data1, 'data', vis, 'data')
 
     # Calibrate the visibilities with StefCal
     #calibrate.run_calibrate(vis)
 
-    # Run BDA
+    # Run final BDA (compress).
     ave_data = bda.run_bda(config, vis, 'data')
 
     # Image visibilities
-    # print('xx', len(config['imaging']['images']))
     model_images = imager.run_imager(config, vis, 'model')
     dirty_images = imager.run_imager(config, vis, 'data')
     #corrected = imager.run_imager(config, vis, 'corrected')

@@ -34,14 +34,17 @@ def run_imager(config, vis, amp_name, image_name=None):
         num_vis = len(amp)
 
         print('- Making image...')
-        print('  - Description :', image_config['description'])
-        print('  - Size        :', size)
-        print('  - FoV         : %.1f deg' % fov)
+        print('  - Description            :', image_config['description'])
+        print('  - Amplitude array name   :', amp_name)
+        print('  - Number of visibilities :', num_vis)
+        print('  - Size                   :', size)
+        print('  - FoV                    : %.1f deg' % fov)
         im = numpy.zeros([size, size], dtype='f8')
         img = Imager("double")
         img.set_fov(fov)
         img.set_size(size)
-        #img.set_output_root("output_image_file_name_root") # Enable for FITS file.
+        if image_name != None:
+            img.set_output_root(image_name)
         img.set_vis_frequency(freq_hz, 0.0, 1)
         img.set_vis_time(mjd_start + 0.5 * (num_dumps * dump_time_s), 
             dump_time_s, 1)
