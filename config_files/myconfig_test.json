@@ -26,7 +26,7 @@
     }
   },
 
-  "corrupt":
+  "corrupt_test":
   {
     "gain_table": "corrupted",
     "__comment": ["for more stable gains in short simulations",
@@ -49,7 +49,7 @@
   },
 
 
-  "corrupt_orig":
+  "corrupt":
   {
     "gain_table": "corrupted",
     "__comment": ["for more stable gains in short simulations",
@@ -74,7 +74,7 @@
 
   "baseline_average":
   {
-    "max_fact": 1.002,
+    "max_fact": 1.001,
     "fov_radius_deg": 0.9,
     "max_average_time_s": 15.0
   },

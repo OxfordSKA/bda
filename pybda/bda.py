@@ -15,7 +15,7 @@ def run_bda(config, vis, input_amp_name):
     max_average_time_s = config['baseline_average']['max_average_time_s']
     num_antennas = vis['num_antennas']
     num_baselines = vis['num_baselines']
-    num_input_vis = len(vis[input_amp_name])
+    num_input_vis = len(vis['uu'])
     print('- Applying baseline-dependent time averaging...')
     print('  - Max factor              : %.4f' % max_fact)
     print('  - FoV radius              : %.2f deg' % fov_radius_deg)
@@ -25,8 +25,9 @@ def run_bda(config, vis, input_amp_name):
     # Create and set up the averager.
     t0 = time.time()
     h = BDA(num_antennas)
-    h.set_compression(max_fact, fov_radius_deg, 299792458.0/freq_hz, 
+    duvw_max = h.set_compression(max_fact, fov_radius_deg, 299792458.0/freq_hz, 
         max_average_time_s)
+    print('  - Delta UVW max           : %.4f m' % duvw_max)
     h.set_delta_t(time_inc)
     h.set_num_times(num_times)
     h.set_initial_coords(vis['uu'][0:num_baselines],
@@ -45,9 +46,9 @@ def run_bda(config, vis, input_amp_name):
             ww = vis['ww'][i1:i2]
         h.add_data(t, amp, uu, vv, ww)
     ave_data = h.finalise()
-    num_output_vis = len(ave_data['data'])
+    num_output_vis = len(ave_data['uu'])
     print('  - No. output visibilities : %i' % num_output_vis)
-    print('  - Compression ratio       : %.2f' % 
+    print('  - Compression ratio       : %.3f' %
         (float(num_input_vis) / float(num_output_vis)))
     print('  - Visibilities averaged in %.2f s' % (time.time() - t0))
 

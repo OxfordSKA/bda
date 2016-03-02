@@ -29,63 +29,102 @@ def main(config_file):
     if not os.path.exists(sim_config):
         copyfile(config_file, sim_config)
 
-    # Simulate visibilities
+    # Simulate visibilities.
     vis = simple_simulator.simulate_2(config)
 
+    # Image model and corrupted data.
+    original_model     = imager.run_imager(config, vis, 'model')
+    original_corrupted = imager.run_imager(config, vis, 'data')
+
     # Run initial BDA (compress) and overwrite the original data (expand).
+    ave_model1 = bda.run_bda(config, vis, 'model')
     ave_data1 = bda.run_bda(config, vis, 'data')
+    expand_bda.run_expand_bda(vis['num_antennas'], 
+        ave_model1, 'data', vis, 'model')
     expand_bda.run_expand_bda(vis['num_antennas'], 
         ave_data1, 'data', vis, 'data')
 
-    # Calibrate the visibilities with StefCal
-    #calibrate.run_calibrate(vis)
+    # Image corrupted data post-initial-BDA.
+    post_bda1_corrupted = imager.run_imager(config, vis, 'data')
+
+    # Calibrate the visibilities with StefCal.
+    calibrate.run_calibrate(vis, verbose=False)
+
+    # Image calibrated data.
+    calibrated = imager.run_imager(config, vis, 'corrected')
 
     # Run final BDA (compress).
-    ave_data = bda.run_bda(config, vis, 'data')
+    ave_model = bda.run_bda(config, vis, 'model')
+    ave_data = bda.run_bda(config, vis, 'corrected')
 
-    # Image visibilities
-    model_images = imager.run_imager(config, vis, 'model')
-    dirty_images = imager.run_imager(config, vis, 'data')
-    #corrected = imager.run_imager(config, vis, 'corrected')
-    #bda_model_images = imager.run_imager(config, ave_model, 'data')
-    bda_dirty_images = imager.run_imager(config, ave_data, 'data')
-    #bda_corrected = imager.run_imager(config, ave_model, 'corrected')
-    diff_model_dirty = []
-    for model, dirty in zip(model_images, dirty_images):
-        diff_model_dirty.append(model - dirty)
-    diff_data_bda_non_bda = []
-    for dirty, bda_dirty in zip(dirty_images, bda_dirty_images):
-        diff_data_bda_non_bda.append(dirty - bda_dirty)
-    #diff_model_corrected = model - corrected
+    # Image model and calibrated data post-final-BDA.
+    post_bda2_model     = imager.run_imager(config, ave_model, 'data')
+    post_bda2_corrected = imager.run_imager(config, ave_data, 'data')
 
-    # for i in range(len(model_images)):
+    # Make image differences
+    # -------------------------------------------------------------------------
+    # final BDA corrected - final BDA model (for final metrics)
+    diff_final_bda_corrected_final_bda_model = []
+    for corr, model in zip(post_bda2_corrected, post_bda2_model):
+        diff_final_bda_corrected_final_bda_model.append(corr - model)
+
+    # final BDA model - original model (Bill Cotton's test)
+    diff_final_bda_model_original_model = []
+    for model_bda, model_original in zip(post_bda2_model, original_model):
+        diff_final_bda_model_original_model.append(model_bda - model_original)
+
+    # original corrupted - first BDA/expand corrupted (see effect of BDA)
+    diff_original_corrupted_bda_corrupted = []
+    for corr_orig, corr_bda in zip(original_corrupted, post_bda1_corrupted):
+        diff_original_corrupted_bda_corrupted.append(corr_orig - corr_bda)
+
+    # for i in range(len(original_model)):
     for i in range(1):
-
-        fig = pyplot.figure(figsize=(16, 8))
-        ax = fig.add_subplot(231)
-        im1 = ax.imshow(model_images[i], interpolation='nearest')
+        fig = pyplot.figure(figsize=(16, 11))
+        ax = fig.add_subplot(3,3,1)
+        im1 = ax.imshow(original_model[i], interpolation='nearest')
         ax.figure.colorbar(im1, ax=ax)
-        ax.set_title('model')
+        ax.set_title('Original model')
 
-        ax = fig.add_subplot(232)
-        im2 = ax.imshow(dirty_images[i], interpolation='nearest')
+        ax = fig.add_subplot(3,3,2)
+        im2 = ax.imshow(original_corrupted[i], interpolation='nearest')
         ax.figure.colorbar(im2, ax=ax)
-        ax.set_title('dirty')
+        ax.set_title('Original corrupted')
 
-        ax = fig.add_subplot(233)
-        im3 = ax.imshow(bda_dirty_images[i], interpolation='nearest')
+        ax = fig.add_subplot(3,3,3)
+        im3 = ax.imshow(post_bda1_corrupted[i], interpolation='nearest')
         ax.figure.colorbar(im3, ax=ax)
-        ax.set_title('BDA')
+        ax.set_title('Initial BDA corrupted')
 
-        ax = fig.add_subplot(234)
-        im4 = ax.imshow(diff_model_dirty[i], interpolation='nearest')
+        ax = fig.add_subplot(3,3,4)
+        im4 = ax.imshow(post_bda2_model[i], interpolation='nearest')
         ax.figure.colorbar(im4, ax=ax)
-        ax.set_title('model - dirty')
+        ax.set_title('Final BDA model')
 
-        ax = fig.add_subplot(235)
-        im5 = ax.imshow(diff_data_bda_non_bda[i], interpolation='nearest')
+        ax = fig.add_subplot(3,3,5)
+        im5 = ax.imshow(post_bda2_corrected[i], interpolation='nearest')
         ax.figure.colorbar(im5, ax=ax)
-        ax.set_title('dirty - BDA dirty')
+        ax.set_title('Final BDA calibrated')
+
+        ax = fig.add_subplot(3,3,6)
+        im6 = ax.imshow(diff_final_bda_corrected_final_bda_model[i], interpolation='nearest')
+        ax.figure.colorbar(im6, ax=ax)
+        ax.set_title('Final BDA (calibrated - model)')
+
+        ax = fig.add_subplot(3,3,7)
+        im7 = ax.imshow(diff_final_bda_model_original_model[i], interpolation='nearest')
+        ax.figure.colorbar(im7, ax=ax)
+        ax.set_title('Final BDA model - Original model (Cotton)')
+
+        ax = fig.add_subplot(3,3,8)
+        im8 = ax.imshow(diff_original_corrupted_bda_corrupted[i], interpolation='nearest')
+        ax.figure.colorbar(im8, ax=ax)
+        ax.set_title('Original corrupted - Initial BDA corrupted')
+
+        ax = fig.add_subplot(3,3,9)
+        im9 = ax.imshow(calibrated[i], interpolation='nearest')
+        ax.figure.colorbar(im9, ax=ax)
+        ax.set_title('Calibrated')
 
         pyplot.show()
 
