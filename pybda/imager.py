@@ -8,6 +8,7 @@ from oskar.imager import Imager
 
 def run_imager(config, vis, amp_name, image_name=None):
     images = []
+    border_trim = 0.4 # Fraction of 1
     for image_id in range(len(config['imaging']['images'])):
         image_config = config['imaging']['images'][image_id]
         obs_config = config['sim']['observation']
@@ -54,7 +55,9 @@ def run_imager(config, vis, amp_name, image_name=None):
         t0 = time.time()
         img.update(num_vis, uu, vv, ww, amp, weight)
         img.finalise(im)
-        images.append(im)
+        pix_start = border_trim * size
+        pix_end = size - pix_start
+        images.append(im[pix_start:pix_end, pix_start:pix_end])
         print('  - Visibilities imaged in %.1f s' % (time.time() - t0))
 
     return images
