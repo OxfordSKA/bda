@@ -5,7 +5,6 @@ import time
 import numpy
 from oskar.imager import Imager
 
-
 def run_imager(config, vis, amp_name, image_name=None):
     images = []
     border_trim = 0.4 # Fraction of 1
@@ -26,13 +25,7 @@ def run_imager(config, vis, amp_name, image_name=None):
             image_dec = image_config['dec_deg']
         size = image_config['size']
         fov = image_config['fov_deg']
-
-        amp = vis[amp_name]
-        uu = vis['uu']
-        vv = vis['vv']
-        ww = vis['ww']
-        weight = vis['weight']
-        num_vis = len(amp)
+        num_vis = len(vis[amp_name])
 
         print('- Making image...')
         print('  - Description            :', image_config['description'])
@@ -40,6 +33,8 @@ def run_imager(config, vis, amp_name, image_name=None):
         print('  - Number of visibilities :', num_vis)
         print('  - Size                   :', size)
         print('  - FoV                    : %.1f deg' % fov)
+
+        # Set up the imager.
         im = numpy.zeros([size, size], dtype='f8')
         img = Imager("double")
         img.set_fov(fov)
@@ -52,8 +47,17 @@ def run_imager(config, vis, amp_name, image_name=None):
         img.set_vis_phase_centre(vis_ra, vis_dec)
         if image_ra != vis_ra or image_dec != vis_dec:
             img.set_direction(image_ra, image_dec)
+        block_size = num_vis / 100
+        num_blocks = (num_vis + block_size - 1) / block_size
         t0 = time.time()
-        img.update(num_vis, uu, vv, ww, amp, weight)
+        for i in range(num_blocks):
+            start = i * block_size
+            end = start + block_size
+            if end > num_vis:
+                end = num_vis
+            img.update(end-start, vis['uu'][start:end], vis['vv'][start:end],
+                vis['ww'][start:end], vis[amp_name][start:end],
+                vis['weight'][start:end])
         img.finalise(im)
         pix_start = border_trim * size
         pix_end = size - pix_start

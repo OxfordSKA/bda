@@ -30,6 +30,7 @@ def main(config_file):
         copyfile(config_file, sim_config)
 
     # Simulate visibilities.
+    t0 = time.time()
     vis = simple_simulator.simulate_2(config)
 
     # Image model and corrupted data.
@@ -38,17 +39,20 @@ def main(config_file):
 
     # Run initial BDA (compress) and overwrite the original data (expand).
     ave_model1 = bda.run_bda(config, vis, 'model')
-    ave_data1 = bda.run_bda(config, vis, 'data')
     expand_bda.run_expand_bda(vis['num_antennas'], 
         ave_model1, 'data', vis, 'model')
+    del ave_model1
+    ave_data1 = bda.run_bda(config, vis, 'data')
     expand_bda.run_expand_bda(vis['num_antennas'], 
         ave_data1, 'data', vis, 'data')
+    del ave_data1
 
     # Image corrupted data post-initial-BDA.
     post_bda1_corrupted = imager.run_imager(config, vis, 'data')
 
     # Calibrate the visibilities with StefCal.
     calibrate.run_calibrate(vis, verbose=False)
+    del vis['data']
 
     # Image calibrated data.
     calibrated = imager.run_imager(config, vis, 'corrected')
@@ -56,10 +60,13 @@ def main(config_file):
     # Run final BDA (compress).
     ave_model = bda.run_bda(config, vis, 'model')
     ave_data = bda.run_bda(config, vis, 'corrected')
+    del vis
 
     # Image model and calibrated data post-final-BDA.
     post_bda2_model     = imager.run_imager(config, ave_model, 'data')
     post_bda2_corrected = imager.run_imager(config, ave_data, 'data')
+    del ave_model
+    del ave_data
 
     # Make image differences
     # -------------------------------------------------------------------------
@@ -77,6 +84,9 @@ def main(config_file):
     diff_original_corrupted_bda_corrupted = []
     for corr_orig, corr_bda in zip(original_corrupted, post_bda1_corrupted):
         diff_original_corrupted_bda_corrupted.append(corr_orig - corr_bda)
+
+    # Print time taken.
+    print('- BDA pipeline took %.1f s' % (time.time() - t0))
 
     # for i in range(len(original_model)):
     for i in range(1):

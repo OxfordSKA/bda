@@ -167,7 +167,7 @@ def simulate_2(config):
     print('    -  Hurst amp %.1f, phase %.1f' % (hurst_amp, hurst_phase))
     print('    -  A. dev amp %.1e, phase %.1e' % (adev_amp, adev_phase))
 
-    num_bytes = num_vis * 8 * 7 + (num_antennas * num_times) * 16
+    num_bytes = num_vis * 8 * 8 + (num_antennas * num_times) * 16
     mem = virtual_memory()
     print('  - Mem. required : %.1f / %.1f MB' %
           (num_bytes / 1024.0**2, mem.total / 1024.0**2))
