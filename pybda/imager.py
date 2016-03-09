@@ -3,12 +3,14 @@
 from __future__ import print_function, absolute_import
 import time
 import numpy
+from os.path import join
 from oskar.imager import Imager
 
-def run_imager(config, vis, amp_name, image_name=None):
+def run(config, vis, amp_name, image_name=None):
     images = []
     border_trim = 0.4 # Fraction of 1
     for image_id in range(len(config['imaging']['images'])):
+        sim_dir = config['path']
         image_config = config['imaging']['images'][image_id]
         obs_config = config['sim']['observation']
         mjd_start = obs_config['start_time_mjd']
@@ -40,7 +42,7 @@ def run_imager(config, vis, amp_name, image_name=None):
         img.set_fov(fov)
         img.set_size(size)
         if image_name != None:
-            img.set_output_root(image_name)
+            img.set_output_root(join(sim_dir, image_name + '_' + str(image_id)))
         img.set_vis_frequency(freq_hz, 0.0, 1)
         img.set_vis_time(mjd_start + 0.5 * (num_dumps * dump_time_s), 
             dump_time_s, 1)

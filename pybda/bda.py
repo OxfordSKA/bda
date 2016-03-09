@@ -6,7 +6,7 @@ import numpy
 from oskar.bda import BDA
 
 
-def run_bda(config, vis, input_amp_name):
+def run(config, vis, input_amp_name):
     num_times = config['sim']['observation']['num_times']
     time_inc = config['sim']['observation']['dump_time_s']
     freq_hz = config['sim']['observation']['freq_hz']
@@ -47,9 +47,9 @@ def run_bda(config, vis, input_amp_name):
         h.add_data(t, amp, uu, vv, ww)
     ave_data = h.finalise()
     num_output_vis = len(ave_data['uu'])
+    compression_ratio = float(num_input_vis) / float(num_output_vis)
     print('  - No. output visibilities : %i' % num_output_vis)
-    print('  - Compression ratio       : %.3f' %
-        (float(num_input_vis) / float(num_output_vis)))
+    print('  - Compression ratio       : %.3f' % compression_ratio)
     print('  - Visibilities averaged in %.2f s' % (time.time() - t0))
 
-    return ave_data
+    return ave_data, compression_ratio

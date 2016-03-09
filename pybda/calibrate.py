@@ -7,7 +7,7 @@ import numpy
 import time
 
 
-def run_calibrate(vis, verbose=False):
+def run(vis, verbose=False):
     print('- Calibrating data...')
     num_baselines = vis['num_baselines']
     num_antennas = vis['num_antennas']

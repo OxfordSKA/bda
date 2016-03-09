@@ -6,9 +6,7 @@ import numpy
 from oskar._bda_utils import expand
 
 
-def run_expand_bda(num_antennas, vis_compressed, input_name, 
-        vis_original, output_name):
-
+def run(num_antennas, vis_compressed, input_name, vis_original, output_name):
     print('- Expanding compressed data...')
     t0 = time.time()
     expand(num_antennas, vis_compressed, input_name, vis_original, output_name)
